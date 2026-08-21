@@ -1,0 +1,22 @@
+RewriteEngine On
+RewriteBase /
+
+# Never serve internals directly over HTTP — they're only meant to be
+# required by other PHP scripts or run via CLI/git, not requested by a browser.
+RewriteRule ^(run_migrations\.php|db\.php|vk_api\.php|session_init\.php)$ - [F,L]
+RewriteRule ^migrations/ - [F,L]
+RewriteRule ^\.git/ - [F,L]
+RewriteRule ^\.gitignore$ - [F,L]
+RewriteRule ^\.htaccess$ - [F,L]
+
+# Real files (login.php, logout.php, fetch.php, api/*.php, config.php) are served as-is.
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# The built frontend bundle lives in dist/ (see frontend/vite.config.js) but is
+# served as if it were at the domain root, alongside the PHP scripts.
+RewriteRule ^assets/(.*)$ dist/assets/$1 [L]
+RewriteRule ^favicon\.svg$ dist/favicon.svg [L]
+
+# Everything else is an SPA route — fall back to the built entry point.
+RewriteRule ^ dist/index.html [L]
