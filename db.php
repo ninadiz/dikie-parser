@@ -29,6 +29,10 @@ function getDbConnection(): PDO
 
 function getPosts(?string $dateFrom, ?string $dateTo, int $limit = 150, int $offset = 0): array
 {
+    if ($dateFrom === null && $dateTo === null) {
+        $dateFrom = getSetting('baseline_date');
+    }
+
     $pdo = getDbConnection();
     $stmt = $pdo->prepare(
         'SELECT * FROM posts

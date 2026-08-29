@@ -12,6 +12,9 @@ if (empty($_SESSION['authenticated'])) {
     exit;
 }
 
+// Release the session lock now that auth is checked — see api/posts.php for why.
+session_write_close();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
     $baselineDate = $input['baseline_date'] ?? '';

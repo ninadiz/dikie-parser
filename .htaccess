@@ -3,13 +3,15 @@ RewriteBase /
 
 # Never serve internals directly over HTTP — they're only meant to be
 # required by other PHP scripts or run via CLI/git, not requested by a browser.
-RewriteRule ^(run_migrations\.php|db\.php|vk_api\.php|session_init\.php)$ - [F,L]
+# config.php is already safe-by-construction (a bare `return [...]` outputs nothing
+# when hit directly), but it's blocked too for defense in depth since it holds secrets.
+RewriteRule ^(run_migrations\.php|db\.php|vk_api\.php|session_init\.php|config\.php|config\.example\.php)$ - [F,L]
 RewriteRule ^migrations/ - [F,L]
 RewriteRule ^\.git/ - [F,L]
 RewriteRule ^\.gitignore$ - [F,L]
 RewriteRule ^\.htaccess$ - [F,L]
 
-# Real files (login.php, logout.php, fetch.php, api/*.php, config.php) are served as-is.
+# Real files (login.php, logout.php, fetch.php, api/*.php) are served as-is.
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]
 

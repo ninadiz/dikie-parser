@@ -14,6 +14,18 @@ function extractLinks(string $text): array
     return $matches[0];
 }
 
+function buildAuthorLink(?int $authorId): ?string
+{
+    if ($authorId === null) {
+        return null;
+    }
+
+    // Negative from_id means the post was published by the community itself, not a person.
+    return $authorId < 0
+        ? 'https://vk.com/club' . abs($authorId)
+        : "https://vk.com/id{$authorId}";
+}
+
 function runFetch(): int
 {
     $config = require __DIR__ . '/config.php';
@@ -57,14 +69,14 @@ function runFetch(): int
             }
 
             $text = $item['text'] ?? '';
-            $authorId = $item['from_id'] ?? null;
+            $authorId = isset($item['from_id']) ? (int) $item['from_id'] : null;
 
             upsertPost([
                 'vk_post_id' => $vkPostId,
                 'text' => $text,
                 'published_at' => $publishedAt,
                 'author_id' => $authorId,
-                'author_link' => $authorId !== null ? "https://vk.com/id{$authorId}" : null,
+                'author_link' => buildAuthorLink($authorId),
                 'links' => extractLinks($text),
             ]);
 
@@ -100,6 +112,11 @@ if (php_sapi_name() === 'cli') {
         echo json_encode(['error' => 'Unauthorized']);
         exit;
     }
+
+    // Release the session lock now that auth is checked — this request can run for a
+    // while (paging through VK with rate-limit sleeps), and would otherwise block any
+    // other concurrent request against the same session for its entire duration.
+    session_write_close();
 
     try {
         $count = runFetch();

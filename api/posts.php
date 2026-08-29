@@ -12,6 +12,11 @@ if (empty($_SESSION['authenticated'])) {
     exit;
 }
 
+// Release the session lock now that auth is checked — otherwise this holds an exclusive
+// file lock on the session for the whole request, serializing concurrent API calls
+// (e.g. the frontend's Promise.all([getPosts(), getStats()])) against each other.
+session_write_close();
+
 $datePattern = '/^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$/';
 $dateFrom = !empty($_GET['date_from']) ? $_GET['date_from'] : null;
 $dateTo = !empty($_GET['date_to']) ? $_GET['date_to'] : null;
