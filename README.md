@@ -1,2 +1,78 @@
-# dikie-parser
-Web application for collecting posts from a VK group wall via the official VK API and viewing them in a custom admin panel with date filtering and basic statistics.
+# VK Wall Parser
+
+Веб-приложение для сбора постов со стены VK-группы через официальный VK API и их просмотра
+в собственной админ-панели с фильтрацией по датам и базовой статистикой. Развёрнуто на
+shared-хостинге (PHP/MySQL), без выделенного сервера.
+
+Полное техническое задание — [TZ_vk_wall_parser.md](TZ_vk_wall_parser.md).
+Инструкции по деплою — [DEPLOY.md](DEPLOY.md).
+
+---
+
+## Технологический стек
+
+| Компонент | Технология |
+|---|---|
+| Backend | PHP (без фреймворка — обычные скрипты + простой роутинг) |
+| База данных | MySQL |
+| Frontend админки | React + Tailwind CSS (SPA), собирается через Vite в статический бандл (`dist/`) |
+| Внешний API | VK API (`wall.get`) |
+| Хостинг | Shared-хостинг (PHP + MySQL + Cron через ISPmanager/cPanel) |
+| Секреты | `config.php`, вне репозитория (`.gitignore`) |
+| Миграции БД | SQL-файлы в `migrations/`, применяются через `run_migrations.php` |
+
+---
+
+## Структура проекта
+
+```
+/
+├── config.php                  # НЕ в репозитории. Креды MySQL, VK access_token
+├── config.example.php          # Шаблон конфига
+├── db.php                      # Подключение к БД (PDO), хелперы для работы с таблицами
+├── vk_api.php                  # Обёртка над VK API (wall.get)
+├── fetch.php                   # Дозагрузка постов (CLI и AJAX-эндпоинт кнопки в админке)
+├── login.php / logout.php      # Аутентификация по сессии
+├── session_init.php            # Настройка сессионных cookie
+├── api/
+│   ├── posts.php                # GET: список постов с фильтром по датам
+│   ├── stats.php                # GET: статистика за диапазон/весь период
+│   └── settings.php             # GET/POST: нулевая дата отсчёта
+├── migrations/                  # 001-003: posts, settings, migrations
+├── run_migrations.php          # Применяет неприменённые миграции по порядку
+├── frontend/                   # Исходники React-приложения
+│   └── src/
+│       ├── App.jsx
+│       ├── components/          # LoginForm, PostsTable, DateRangeFilter, StatsBar, ...
+│       └── api/                 # обёртки над fetch() к PHP-эндпоинтам
+├── dist/                        # Собранный React-бандл, раздаётся хостингом как статика
+└── .htaccess                    # Роутинг SPA + блокировка внутренних PHP-файлов
+```
+
+На хостинге нет Node.js — сборка фронтенда (`npm run build`) выполняется локально/в CI,
+в репозиторий коммитится уже готовый `dist/`. PHP-часть — обычные серверные скрипты, которые
+React-приложение вызывает через `fetch()`.
+
+---
+
+## Основные возможности
+
+- Инкрементальная дозагрузка постов с VK-стены (по кнопке в админке или CLI), без дублей.
+- Просмотр постов: дата, текст, ссылка на автора, ссылки из текста.
+- Бесконечный скролл с буферизацией (150 постов запросом, подгрузка по мере прокрутки).
+- Фильтрация по диапазону дат с пересчётом статистики.
+- Редактируемая «нулевая дата отсчёта» для статистики за весь период.
+- Одна пара логин/пароль, авторизация по PHP-сессии.
+
+---
+
+## Локальный запуск
+
+```bash
+php run_migrations.php
+php -S 127.0.0.1:8000          # backend
+cd frontend && npm install && npm run dev   # frontend (проксирует /api и т.д. на :8000)
+```
+
+Конфиг — по образцу `config.example.php`. Подробности локальной разработки и деплоя на
+хостинг — в [DEPLOY.md](DEPLOY.md).
