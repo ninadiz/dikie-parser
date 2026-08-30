@@ -1,0 +1,23 @@
+{
+  "name": "vk-wall-parser",
+  "version": "1.0.0",
+  "description": "Веб-приложение для сбора постов со стены VK-группы через официальный VK API и их просмотра в собственной админ-панели с фильтрацией по датам и базовой статистикой. Развёрнуто на shared-хостинге (PHP/MySQL), без выделенного сервера.",
+  "main": "index.js",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ninadiz/dikie-parser.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ninadiz/dikie-parser/issues"
+  },
+  "homepage": "https://github.com/ninadiz/dikie-parser#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.4.0"
+  }
+}
