@@ -56,8 +56,17 @@ function runFetch(): int
         foreach ($items as $item) {
             $publishedAt = date('Y-m-d H:i:s', (int) $item['date']);
             $vkPostId = (int) $item['id'];
+            $isPinned = !empty($item['is_pinned']);
 
-            if ($lastPublishedAt !== null) {
+            // A pinned post is always returned first by VK regardless of its actual
+            // publish date, breaking the "items are strictly newest-to-oldest" assumption
+            // the stop condition below relies on — so it must not trigger it. Skip it
+            // entirely if we already have it (it never needs re-fetching once seen).
+            if ($isPinned && $lastVkPostId !== null && postExists($vkPostId)) {
+                continue;
+            }
+
+            if (!$isPinned && $lastPublishedAt !== null) {
                 if ($publishedAt < $lastPublishedAt) {
                     $stop = true;
                     break;

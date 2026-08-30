@@ -93,6 +93,15 @@ function upsertPost(array $post): void
     ]);
 }
 
+function postExists(int $vkPostId): bool
+{
+    $pdo = getDbConnection();
+    $stmt = $pdo->prepare('SELECT 1 FROM posts WHERE vk_post_id = :vk_post_id');
+    $stmt->execute(['vk_post_id' => $vkPostId]);
+
+    return (bool) $stmt->fetchColumn();
+}
+
 function getLastPost(): ?array
 {
     $pdo = getDbConnection();
