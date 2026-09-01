@@ -28,19 +28,35 @@
    php run_migrations.php
    ```
 
-5. **Проверить `.htaccess`** — он уже в репозитории и обеспечивает:
-   - раздачу `dist/index.html` и `dist/assets/*` как будто они лежат в корне домена
-     (см. `frontend/vite.config.js` — билд собирается в `../dist`, т.е. в корень репозитория);
+5. **Разложить собранный фронтенд в корень домена** (не оставлять его внутри `dist/`):
+   ```bash
+   rm -rf assets index.html favicon.svg
+   cp -r dist/assets assets
+   cp dist/index.html index.html
+   cp dist/favicon.svg favicon.svg
+   ```
+   ⚠️ Это обязательный шаг, а не косметика: на многих хостингах (подтверждено на HostiMan)
+   перед Apache стоит nginx, который отдаёт статику (`.js`/`.css`/`.svg`) напрямую с диска по
+   буквальному пути запроса и отвечает 404, если файла там физически нет — до `.htaccess` и
+   `mod_rewrite` такой запрос вообще не доходит. Поэтому alias вида `assets/ → dist/assets/`
+   через rewrite здесь не работает в принципе — файлы должны реально лежать в корне.
+
+6. **Проверить `.htaccess`** — он уже в репозитории и обеспечивает:
+   - раздачу `index.html`/`assets/*`/`favicon.svg` из корня (после шага 5 выше);
    - блокировку прямого веб-доступа к `run_migrations.php`, `db.php`, `vk_api.php`,
-     `session_init.php`, `config.php`, `config.example.php`, `migrations/`, `.git/`.
+     `session_init.php`, `config.php`, `config.example.php`, `migrations/`, `.git/`, а также
+     к `frontend/`, `tests/`, `.github/` и служебным файлам репозитория (`README.md`,
+     `DEPLOY.md`, `TZ_vk_wall_parser.md`, `package.json` и т.п.) — они не нужны на проде, но
+     физически окажутся в DocumentRoot после `git clone . <DocumentRoot>` на шаге 2, поэтому
+     `.htaccess` их прячет.
    - Требует `mod_rewrite` включённый на хостинге (стандартно для Apache/ISPmanager).
 
-6. **Первичная загрузка постов** (Сценарий 1 из ТЗ) — вручную по SSH:
+7. **Первичная загрузка постов** (Сценарий 1 из ТЗ) — вручную по SSH:
    ```bash
    php fetch.php
    ```
 
-7. Открыть домен в браузере, залогиниться (`auth.username` / пароль, который был захеширован в шаге 3).
+8. Открыть домен в браузере, залогиниться (`auth.username` / пароль, который был захеширован в шаге 3).
 
 ## Получение VK access_token
 
@@ -72,6 +88,11 @@
 git pull
 # если менялась схема БД:
 php run_migrations.php
+# если менялся frontend/src (пересобранный dist/ уже должен быть закоммичен, см. ниже):
+rm -rf assets index.html favicon.svg
+cp -r dist/assets assets
+cp dist/index.html index.html
+cp dist/favicon.svg favicon.svg
 ```
 
 `config.php` вне репозитория — `git pull` его не тронет.

@@ -11,14 +11,22 @@ RewriteRule ^\.git/ - [F,L]
 RewriteRule ^\.gitignore$ - [F,L]
 RewriteRule ^\.htaccess$ - [F,L]
 
-# Real files (login.php, logout.php, fetch.php, api/*.php) are served as-is.
+# `git clone . <DocumentRoot>` (see DEPLOY.md) puts the whole repo in the docroot, not
+# just the runtime files — block the dev-only directories and repo/doc files that come
+# along with it but were never meant to be public.
+RewriteRule ^(frontend|tests|\.github)/ - [F,L]
+RewriteRule ^(README|DEPLOY|TZ_vk_wall_parser)\.md$ - [F,L]
+RewriteRule ^(package(-lock)?\.json|playwright\.config\.ts)$ - [F,L]
+
+# Real files (login.php, logout.php, fetch.php, api/*.php, index.html, assets/*,
+# favicon.svg) are served as-is. The built frontend bundle (frontend/vite.config.js
+# builds it into dist/) must be deployed FLAT at the docroot root — copy dist/'s
+# *contents*, not the dist/ folder itself. Many hosts (confirmed on HostiMan) put a
+# static-file proxy in front of Apache that serves .js/.css straight from disk by
+# literal path and 404s if it's not there, without ever consulting mod_rewrite — so
+# a dist/ -> root rewrite alias silently never runs for those requests.
 RewriteCond %{REQUEST_FILENAME} -f
 RewriteRule ^ - [L]
 
-# The built frontend bundle lives in dist/ (see frontend/vite.config.js) but is
-# served as if it were at the domain root, alongside the PHP scripts.
-RewriteRule ^assets/(.*)$ dist/assets/$1 [L]
-RewriteRule ^favicon\.svg$ dist/favicon.svg [L]
-
 # Everything else is an SPA route — fall back to the built entry point.
-RewriteRule ^ dist/index.html [L]
+RewriteRule ^ index.html [L]
