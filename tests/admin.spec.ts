@@ -6,7 +6,7 @@ test('opens straight to the posts table, no login required', async ({ page }) =>
   await page.goto('/');
 
   await expect(page.getByRole('heading', { name: 'Посты со стены VK-группы' })).toBeVisible();
-  await expect(page.getByText(samplePosts[0].text)).toBeVisible();
+  await expect(page.getByRole('cell', { name: samplePosts[0].text })).toBeVisible();
   await expect(page.getByText(`Постов за весь период: `)).toBeVisible();
   await expect(page.getByText(String(samplePosts.length), { exact: true })).toBeVisible();
 });
@@ -76,7 +76,7 @@ test('clicking "Догрузить новые посты" fetches new posts and 
   await page.getByRole('button', { name: 'Догрузить новые посты' }).click();
 
   await expect(page.getByText('Загружено 1 новых постов')).toBeVisible();
-  await expect(page.getByText('Догруженный пост')).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'Догруженный пост' })).toBeVisible();
 });
 
 test('clicking "Догрузить новые посты" reports zero when there is nothing new', async ({ page }) => {

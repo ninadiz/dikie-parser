@@ -15,30 +15,30 @@ export default function DateRangeFilter({ onApply }) {
   }
 
   return (
-    <div className="mb-4 flex flex-wrap items-end gap-3 rounded-lg bg-white px-4 py-3 shadow-sm">
-      <label className="flex flex-col text-sm text-slate-600">
+    <div className="mb-4 flex flex-col gap-3 rounded-lg bg-white px-4 py-3 shadow-sm sm:flex-row sm:flex-wrap sm:items-end">
+      <label className="flex w-full flex-col text-sm text-slate-600 sm:w-auto">
         С
         <input
           type="date"
           value={dateFrom}
           onChange={(e) => setDateFrom(e.target.value)}
-          className="rounded border border-slate-300 px-2 py-1 focus:border-slate-500 focus:outline-none"
+          className="w-full rounded border border-slate-300 px-2 py-1 focus:border-slate-500 focus:outline-none sm:w-auto"
         />
       </label>
 
-      <label className="flex flex-col text-sm text-slate-600">
+      <label className="flex w-full flex-col text-sm text-slate-600 sm:w-auto">
         По
         <input
           type="date"
           value={dateTo}
           onChange={(e) => setDateTo(e.target.value)}
-          className="rounded border border-slate-300 px-2 py-1 focus:border-slate-500 focus:outline-none"
+          className="w-full rounded border border-slate-300 px-2 py-1 focus:border-slate-500 focus:outline-none sm:w-auto"
         />
       </label>
 
       <button
         onClick={handleApply}
-        className="rounded bg-slate-800 px-4 py-1.5 text-sm text-white hover:bg-slate-700"
+        className="w-full rounded bg-slate-800 px-4 py-1.5 text-sm text-white hover:bg-slate-700 sm:w-auto"
       >
         Применить фильтр
       </button>
@@ -46,7 +46,7 @@ export default function DateRangeFilter({ onApply }) {
       {(dateFrom || dateTo) && (
         <button
           onClick={handleReset}
-          className="rounded border border-slate-300 px-4 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+          className="w-full rounded border border-slate-300 px-4 py-1.5 text-sm text-slate-600 hover:bg-slate-50 sm:w-auto"
         >
           Сбросить
         </button>

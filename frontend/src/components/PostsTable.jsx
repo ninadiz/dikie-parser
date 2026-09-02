@@ -20,7 +20,7 @@ export default function PostsTable({ posts, onNearEnd, loadingMore }) {
       onScroll={handleScroll}
       className="max-h-[70vh] overflow-y-auto rounded-lg bg-white shadow-sm"
     >
-      <table className="w-full border-collapse text-left text-sm">
+      <table className="hidden w-full border-collapse text-left text-sm md:table">
         <thead className="sticky top-0 bg-slate-100 text-slate-600">
           <tr>
             <th className="px-4 py-2 font-medium">Дата</th>
@@ -70,6 +70,47 @@ export default function PostsTable({ posts, onNearEnd, loadingMore }) {
           ))}
         </tbody>
       </table>
+
+      <ul className="divide-y divide-slate-100 md:hidden">
+        {posts.map((post) => (
+          <li key={post.id} className="space-y-2 p-4">
+            <p className="text-xs text-slate-500">{formatDate(post.published_at)}</p>
+            <p className="whitespace-pre-wrap text-sm text-slate-800">{post.text}</p>
+            <p className="text-sm">
+              <span className="text-slate-500">Автор: </span>
+              <a
+                href={post.author_link}
+                target="_blank"
+                rel="noreferrer"
+                className="break-all text-blue-600 hover:underline"
+              >
+                {post.author_link}
+              </a>
+            </p>
+            <div className="text-sm">
+              <span className="text-slate-500">Ссылки: </span>
+              {post.links.length === 0 ? (
+                <span className="text-slate-400">—</span>
+              ) : (
+                <ul className="mt-1 space-y-1">
+                  {post.links.map((link) => (
+                    <li key={link}>
+                      <a
+                        href={link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="break-all text-blue-600 hover:underline"
+                      >
+                        {link}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
 
       {posts.length === 0 && (
         <p className="px-4 py-6 text-center text-slate-400">Постов не найдено</p>

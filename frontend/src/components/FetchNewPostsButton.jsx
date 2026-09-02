@@ -18,11 +18,11 @@ export default function FetchNewPostsButton({ onFetched }) {
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex w-full flex-wrap items-center gap-3 sm:w-auto">
       <button
         onClick={handleClick}
         disabled={loading}
-        className="rounded bg-emerald-700 px-4 py-1.5 text-sm text-white hover:bg-emerald-600 disabled:opacity-50"
+        className="w-full rounded bg-emerald-700 px-4 py-1.5 text-sm text-white hover:bg-emerald-600 disabled:opacity-50 sm:w-auto"
       >
         {loading ? 'Загрузка...' : 'Догрузить новые посты'}
       </button>

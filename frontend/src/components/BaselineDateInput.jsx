@@ -19,7 +19,7 @@ export default function BaselineDateInput({ value, onChange }) {
   }
 
   return (
-    <label className="flex items-center gap-2 text-sm text-slate-600">
+    <label className="flex w-full flex-wrap items-center gap-2 text-sm text-slate-600 sm:w-auto">
       Нулевая дата отсчёта:
       <input
         type="date"

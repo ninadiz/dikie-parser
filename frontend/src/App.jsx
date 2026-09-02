@@ -155,13 +155,13 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
+    <div className="min-h-screen bg-slate-100 p-3 sm:p-6">
       <div className="mx-auto max-w-5xl">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-slate-800">Посты со стены VK-группы</h1>
+          <h1 className="text-lg font-semibold text-slate-800 sm:text-xl">Посты со стены VK-группы</h1>
         </div>
 
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
           <BaselineDateInput value={baselineDate} onChange={handleBaselineChange} />
           <FetchNewPostsButton onFetched={handleFetchNew} />
         </div>
