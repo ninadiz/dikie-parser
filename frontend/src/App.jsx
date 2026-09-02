@@ -1,19 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import LoginForm from './components/LoginForm'
 import PostsTable from './components/PostsTable'
 import DateRangeFilter from './components/DateRangeFilter'
 import StatsBar from './components/StatsBar'
 import BaselineDateInput from './components/BaselineDateInput'
 import FetchNewPostsButton from './components/FetchNewPostsButton'
-import {
-  login,
-  logout,
-  getPosts,
-  getStats,
-  getSettings,
-  updateBaselineDate,
-  fetchNewPosts,
-} from './api/posts'
+import { getPosts, getStats, getSettings, updateBaselineDate, fetchNewPosts } from './api/posts'
 
 const INITIAL_LIMIT = 150
 const PAGE_SIZE = 50
@@ -21,7 +12,7 @@ const BACKGROUND_LIMIT = 100
 const REFILL_THRESHOLD = 50
 
 export default function App() {
-  const [authState, setAuthState] = useState('checking') // checking | authenticated | unauthenticated
+  const [status, setStatus] = useState('loading') // loading | ready | error
   const [shown, setShown] = useState([])
   const [loadingMore, setLoadingMore] = useState(false)
   const [statsCount, setStatsCount] = useState(0)
@@ -99,31 +90,17 @@ export default function App() {
     try {
       const settings = await getSettings()
       setBaselineDate(settings.baseline_date)
-      setAuthState('authenticated')
+      setStatus('ready')
       await loadInitial(filtersRef.current)
     } catch (err) {
-      if (err.status === 401) {
-        setAuthState('unauthenticated')
-      } else {
-        setLoadError(err.message || 'Не удалось подключиться к серверу')
-        setAuthState('error')
-      }
+      setLoadError(err.message || 'Не удалось подключиться к серверу')
+      setStatus('error')
     }
   }, [loadInitial])
 
   useEffect(() => {
     bootstrap()
   }, [bootstrap])
-
-  async function handleLogin(username, password) {
-    await login(username, password)
-    await bootstrap()
-  }
-
-  async function handleLogout() {
-    await logout()
-    setAuthState('unauthenticated')
-  }
 
   async function handleFilterApply(newFilters) {
     setFilterError(null)
@@ -153,7 +130,7 @@ export default function App() {
     return result.count
   }
 
-  if (authState === 'checking') {
+  if (status === 'loading') {
     return (
       <div className="flex min-h-screen items-center justify-center text-slate-400">
         Загрузка...
@@ -161,11 +138,7 @@ export default function App() {
     )
   }
 
-  if (authState === 'unauthenticated') {
-    return <LoginForm onLogin={handleLogin} />
-  }
-
-  if (authState === 'error') {
+  if (status === 'error') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-100">
         <div className="max-w-sm rounded-lg bg-white p-6 text-center shadow-md">
@@ -186,12 +159,6 @@ export default function App() {
       <div className="mx-auto max-w-5xl">
         <div className="mb-4 flex items-center justify-between">
           <h1 className="text-xl font-semibold text-slate-800">Посты со стены VK-группы</h1>
-          <button
-            onClick={handleLogout}
-            className="rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-white"
-          >
-            Выйти
-          </button>
         </div>
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">

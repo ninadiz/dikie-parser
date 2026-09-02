@@ -8,9 +8,6 @@ export type Post = {
   links: string[];
 };
 
-export const VALID_USERNAME = 'admin';
-export const VALID_PASSWORD = 'correct-password';
-
 export const samplePosts: Post[] = [
   {
     id: 3,
@@ -36,7 +33,6 @@ export const samplePosts: Post[] = [
 ];
 
 type BackendState = {
-  authenticated: boolean;
   baselineDate: string;
   posts: Post[];
   statsCount: number;
@@ -44,7 +40,6 @@ type BackendState = {
 };
 
 type MockOptions = {
-  startAuthenticated?: boolean;
   baselineDate?: string;
   posts?: Post[];
   statsCount?: number;
@@ -53,14 +48,13 @@ type MockOptions = {
 };
 
 /**
- * Stubs every PHP endpoint the SPA talks to (login/logout/api/fetch) with an in-memory
- * fake backend, so tests exercise real frontend behavior without a running PHP+MySQL
- * stack or real VK credentials. Returns the last URL requested for each endpoint, so
- * tests can assert on query params (e.g. the date filter) a click actually sent.
+ * Stubs every PHP endpoint the SPA talks to (api/fetch) with an in-memory fake backend,
+ * so tests exercise real frontend behavior without a running PHP+MySQL stack or real VK
+ * credentials. Returns the last URL requested for each endpoint, so tests can assert on
+ * query params (e.g. the date filter) a click actually sent.
  */
 export async function mockBackend(page: Page, options: MockOptions = {}) {
   const state: BackendState = {
-    authenticated: options.startAuthenticated ?? false,
     baselineDate: options.baselineDate ?? '2021-05-06',
     posts: options.posts ?? samplePosts,
     statsCount: options.statsCount ?? (options.posts ?? samplePosts).length,
@@ -73,10 +67,6 @@ export async function mockBackend(page: Page, options: MockOptions = {}) {
     const request = route.request();
 
     if (request.method() === 'POST') {
-      if (!state.authenticated) {
-        await route.fulfill({ status: 401, json: { error: 'Unauthorized' } });
-        return;
-      }
       const body = request.postDataJSON() as { baseline_date?: string };
       state.baselineDate = body.baseline_date ?? state.baselineDate;
       await route.fulfill({ status: 200, json: { baseline_date: state.baselineDate } });
@@ -84,51 +74,20 @@ export async function mockBackend(page: Page, options: MockOptions = {}) {
     }
 
     lastRequestUrl.settings = request.url();
-    if (!state.authenticated) {
-      await route.fulfill({ status: 401, json: { error: 'Unauthorized' } });
-      return;
-    }
     await route.fulfill({ status: 200, json: { baseline_date: state.baselineDate } });
   });
 
   await page.route('**/api/posts.php*', async (route) => {
     lastRequestUrl.posts = route.request().url();
-    if (!state.authenticated) {
-      await route.fulfill({ status: 401, json: { error: 'Unauthorized' } });
-      return;
-    }
     await route.fulfill({ status: 200, json: { items: state.posts, hasMore: false } });
   });
 
   await page.route('**/api/stats.php*', async (route) => {
     lastRequestUrl.stats = route.request().url();
-    if (!state.authenticated) {
-      await route.fulfill({ status: 401, json: { error: 'Unauthorized' } });
-      return;
-    }
     await route.fulfill({ status: 200, json: { count: state.statsCount } });
   });
 
-  await page.route('**/login.php', async (route) => {
-    const body = route.request().postDataJSON() as { username?: string; password?: string };
-    if (body.username === VALID_USERNAME && body.password === VALID_PASSWORD) {
-      state.authenticated = true;
-      await route.fulfill({ status: 200, json: { success: true } });
-    } else {
-      await route.fulfill({ status: 401, json: { error: 'Неверный логин или пароль' } });
-    }
-  });
-
-  await page.route('**/logout.php', async (route) => {
-    state.authenticated = false;
-    await route.fulfill({ status: 200, json: { success: true } });
-  });
-
   await page.route('**/fetch.php', async (route) => {
-    if (!state.authenticated) {
-      await route.fulfill({ status: 401, json: { error: 'Unauthorized' } });
-      return;
-    }
     if (state.fetchCount > 0) {
       state.posts = [
         {

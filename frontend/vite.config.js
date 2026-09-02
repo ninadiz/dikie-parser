@@ -17,8 +17,6 @@ export default defineConfig({
     host: '127.0.0.1',
     proxy: {
       '/api': PHP_BACKEND,
-      '/login.php': PHP_BACKEND,
-      '/logout.php': PHP_BACKEND,
       '/fetch.php': PHP_BACKEND,
     },
   },

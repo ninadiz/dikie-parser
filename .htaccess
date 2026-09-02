@@ -5,7 +5,7 @@ RewriteBase /
 # required by other PHP scripts or run via CLI/git, not requested by a browser.
 # config.php is already safe-by-construction (a bare `return [...]` outputs nothing
 # when hit directly), but it's blocked too for defense in depth since it holds secrets.
-RewriteRule ^(run_migrations\.php|db\.php|vk_api\.php|session_init\.php|config\.php|config\.example\.php)$ - [F,L]
+RewriteRule ^(run_migrations\.php|db\.php|vk_api\.php|config\.php|config\.example\.php)$ - [F,L]
 RewriteRule ^migrations/ - [F,L]
 RewriteRule ^\.git/ - [F,L]
 RewriteRule ^\.gitignore$ - [F,L]
@@ -18,8 +18,8 @@ RewriteRule ^(frontend|tests|\.github)/ - [F,L]
 RewriteRule ^(README|DEPLOY|TZ_vk_wall_parser)\.md$ - [F,L]
 RewriteRule ^(package(-lock)?\.json|playwright\.config\.ts)$ - [F,L]
 
-# Real files (login.php, logout.php, fetch.php, api/*.php, index.html, assets/*,
-# favicon.svg) are served as-is. The built frontend bundle (frontend/vite.config.js
+# Real files (fetch.php, api/*.php, index.html, assets/*, favicon.svg) are served
+# as-is. The built frontend bundle (frontend/vite.config.js
 # builds it into dist/) must be deployed FLAT at the docroot root — copy dist/'s
 # *contents*, not the dist/ folder itself. Many hosts (confirmed on HostiMan) put a
 # static-file proxy in front of Apache that serves .js/.css straight from disk by

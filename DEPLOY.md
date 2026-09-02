@@ -20,8 +20,7 @@
    cp config.example.php config.php
    ```
    Заполнить: `db` (креды MySQL хостинга), `vk.access_token` + `vk.group_domain` (см. ниже,
-   "Получение VK access_token"), `auth.password_hash` (сгенерировать:
-   `php -r "echo password_hash('пароль', PASSWORD_DEFAULT), PHP_EOL;"`).
+   "Получение VK access_token").
 
 4. **Применить миграции**:
    ```bash
@@ -44,7 +43,7 @@
 6. **Проверить `.htaccess`** — он уже в репозитории и обеспечивает:
    - раздачу `index.html`/`assets/*`/`favicon.svg` из корня (после шага 5 выше);
    - блокировку прямого веб-доступа к `run_migrations.php`, `db.php`, `vk_api.php`,
-     `session_init.php`, `config.php`, `config.example.php`, `migrations/`, `.git/`, а также
+     `config.php`, `config.example.php`, `migrations/`, `.git/`, а также
      к `frontend/`, `tests/`, `.github/` и служебным файлам репозитория (`README.md`,
      `DEPLOY.md`, `TZ_vk_wall_parser.md`, `package.json` и т.п.) — они не нужны на проде, но
      физически окажутся в DocumentRoot после `git clone . <DocumentRoot>` на шаге 2, поэтому
@@ -56,7 +55,7 @@
    php fetch.php
    ```
 
-8. Открыть домен в браузере, залогиниться (`auth.username` / пароль, который был захеширован в шаге 3).
+8. Открыть домен в браузере — таблица постов открывается сразу, без логина.
 
 ## Получение VK access_token
 
@@ -123,7 +122,7 @@ auto-publish).
 ```bash
 php run_migrations.php
 php -S 127.0.0.1:8000          # backend
-cd frontend && npm install && npm run dev   # frontend (проксирует /api, /login.php и т.д. на :8000)
+cd frontend && npm install && npm run dev   # frontend (проксирует /api и /fetch.php на :8000)
 ```
 
 `frontend/vite.config.js` содержит dev-прокси на `http://127.0.0.1:8000` — поменять порт

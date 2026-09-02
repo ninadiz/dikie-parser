@@ -112,20 +112,7 @@ if (php_sapi_name() === 'cli') {
         exit(1);
     }
 } else {
-    require __DIR__ . '/session_init.php';
-    initSession();
     header('Content-Type: application/json');
-
-    if (empty($_SESSION['authenticated'])) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Unauthorized']);
-        exit;
-    }
-
-    // Release the session lock now that auth is checked — this request can run for a
-    // while (paging through VK with rate-limit sleeps), and would otherwise block any
-    // other concurrent request against the same session for its entire duration.
-    session_write_close();
 
     try {
         $count = runFetch();

@@ -9,17 +9,6 @@ function expandRange(dateFrom, dateTo) {
   return { from, to }
 }
 
-export function login(username, password) {
-  return apiFetch('/login.php', {
-    method: 'POST',
-    body: JSON.stringify({ username, password }),
-  })
-}
-
-export function logout() {
-  return apiFetch('/logout.php', { method: 'POST' })
-}
-
 export function getPosts({ dateFrom, dateTo, limit = 150, offset = 0 } = {}) {
   const { from, to } = expandRange(dateFrom, dateTo)
   const params = new URLSearchParams()

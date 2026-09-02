@@ -1,32 +1,9 @@
 import { test, expect } from '@playwright/test';
-import { mockBackend, samplePosts, VALID_USERNAME, VALID_PASSWORD } from './mocks';
+import { mockBackend, samplePosts } from './mocks';
 
-test('shows the login form when not authenticated', async ({ page }) => {
-  await mockBackend(page, { startAuthenticated: false });
+test('opens straight to the posts table, no login required', async ({ page }) => {
+  await mockBackend(page);
   await page.goto('/');
-
-  await expect(page.getByRole('heading', { name: 'Вход в админ-панель' })).toBeVisible();
-});
-
-test('shows an error on invalid credentials and does not log in', async ({ page }) => {
-  await mockBackend(page, { startAuthenticated: false });
-  await page.goto('/');
-
-  await page.getByLabel('Логин').fill('wrong');
-  await page.getByLabel('Пароль').fill('wrong');
-  await page.getByRole('button', { name: 'Войти' }).click();
-
-  await expect(page.getByText('Неверный логин или пароль')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Вход в админ-панель' })).toBeVisible();
-});
-
-test('logs in with valid credentials and shows the posts table', async ({ page }) => {
-  await mockBackend(page, { startAuthenticated: false });
-  await page.goto('/');
-
-  await page.getByLabel('Логин').fill(VALID_USERNAME);
-  await page.getByLabel('Пароль').fill(VALID_PASSWORD);
-  await page.getByRole('button', { name: 'Войти' }).click();
 
   await expect(page.getByRole('heading', { name: 'Посты со стены VK-группы' })).toBeVisible();
   await expect(page.getByText(samplePosts[0].text)).toBeVisible();
@@ -35,7 +12,7 @@ test('logs in with valid credentials and shows the posts table', async ({ page }
 });
 
 test('renders author and text links as clickable anchors', async ({ page }) => {
-  await mockBackend(page, { startAuthenticated: true });
+  await mockBackend(page);
   await page.goto('/');
 
   const row = page.getByRole('row').filter({ hasText: samplePosts[0].text });
@@ -50,7 +27,7 @@ test('renders author and text links as clickable anchors', async ({ page }) => {
 });
 
 test('applying a date range filter requests posts and stats for that range', async ({ page }) => {
-  const { lastRequestUrl } = await mockBackend(page, { startAuthenticated: true });
+  const { lastRequestUrl } = await mockBackend(page);
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Посты со стены VK-группы' })).toBeVisible();
 
@@ -65,7 +42,7 @@ test('applying a date range filter requests posts and stats for that range', asy
 });
 
 test('resetting the filter goes back to the full-period stats label', async ({ page }) => {
-  await mockBackend(page, { startAuthenticated: true });
+  await mockBackend(page);
   await page.goto('/');
 
   await page.getByLabel('С', { exact: true }).fill('2026-08-29');
@@ -77,7 +54,7 @@ test('resetting the filter goes back to the full-period stats label', async ({ p
 });
 
 test('changing the baseline date saves it via the settings endpoint', async ({ page }) => {
-  await mockBackend(page, { startAuthenticated: true, baselineDate: '2021-05-06' });
+  await mockBackend(page, { baselineDate: '2021-05-06' });
   await page.goto('/');
 
   const input = page.getByLabel('Нулевая дата отсчёта:');
@@ -92,7 +69,7 @@ test('changing the baseline date saves it via the settings endpoint', async ({ p
 });
 
 test('clicking "Догрузить новые посты" fetches new posts and reports the count', async ({ page }) => {
-  await mockBackend(page, { startAuthenticated: true, fetchCount: 1 });
+  await mockBackend(page, { fetchCount: 1 });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Посты со стены VK-группы' })).toBeVisible();
 
@@ -103,23 +80,13 @@ test('clicking "Догрузить новые посты" fetches new posts and 
 });
 
 test('clicking "Догрузить новые посты" reports zero when there is nothing new', async ({ page }) => {
-  await mockBackend(page, { startAuthenticated: true, fetchCount: 0 });
+  await mockBackend(page, { fetchCount: 0 });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Посты со стены VK-группы' })).toBeVisible();
 
   await page.getByRole('button', { name: 'Догрузить новые посты' }).click();
 
   await expect(page.getByText('Загружено 0 новых постов')).toBeVisible();
-});
-
-test('logging out returns to the login form', async ({ page }) => {
-  await mockBackend(page, { startAuthenticated: true });
-  await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Посты со стены VK-группы' })).toBeVisible();
-
-  await page.getByRole('button', { name: 'Выйти' }).click();
-
-  await expect(page.getByRole('heading', { name: 'Вход в админ-панель' })).toBeVisible();
 });
 
 test('shows a retry screen when the backend is unreachable', async ({ page }) => {

@@ -21,9 +21,4 @@ return [
         'group_domain' => 'group_short_name_or_id',
         'api_version' => '5.199',
     ],
-    'auth' => [
-        'username' => 'admin',
-        // сгенерировать: php -r "echo password_hash('пароль', PASSWORD_DEFAULT), PHP_EOL;"
-        'password_hash' => '$2y$10$REPLACE_WITH_GENERATED_HASH',
-    ],
 ];
