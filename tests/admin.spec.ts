@@ -53,19 +53,12 @@ test('resetting the filter goes back to the full-period stats label', async ({ p
   await expect(page.getByText('Постов за весь период: ')).toBeVisible();
 });
 
-test('changing the baseline date saves it via the settings endpoint', async ({ page }) => {
+test('baseline date is shown read-only, not editable', async ({ page }) => {
   await mockBackend(page, { baselineDate: '2021-05-06' });
   await page.goto('/');
 
-  const input = page.getByLabel('Нулевая дата отсчёта:');
-  await expect(input).toHaveValue('2021-05-06');
-
-  await input.fill('2023-01-15');
-  // Firefox/WebKit only fire `change` on blur for <input type="date">.
-  await input.blur();
-
-  await expect(page.getByText('сохранение…')).toHaveCount(0);
-  await expect(input).toHaveValue('2023-01-15');
+  await expect(page.getByText('2021-05-06')).toBeVisible();
+  await expect(page.locator('input[type="date"]')).toHaveCount(2); // only the С/По filter inputs
 });
 
 test('clicking "Догрузить новые посты" fetches new posts and reports the count', async ({ page }) => {
@@ -131,4 +124,33 @@ test('shows a retry screen when the backend is unreachable', async ({ page }) =>
   await page.goto('/');
 
   await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible();
+});
+
+test('shows a retry screen instead of crashing when the backend returns a non-JSON body', async ({ page }) => {
+  // Regression: PHP's built-in dev server returns HTTP 200 with an HTML fatal-error
+  // page (not JSON) when the DB is unreachable. apiFetch used to swallow the JSON
+  // parse failure into `{}`, so postsData.items ended up undefined and PostsTable's
+  // posts.map() crashed the whole app to a blank white screen instead of showing an
+  // error.
+  await page.route('**/api/settings.php', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/html', body: '<b>Fatal error</b>: ...' })
+  );
+  await page.goto('/');
+
+  await expect(page.getByRole('button', { name: 'Повторить' })).toBeVisible();
+  await expect(page.locator('body')).not.toBeEmpty();
+});
+
+test('"Догрузить новые посты" shows an error instead of crashing on a non-JSON response', async ({ page }) => {
+  await mockBackend(page);
+  await page.route('**/fetch.php', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/html', body: '<b>Fatal error</b>: ...' })
+  );
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Посты со стены VK-группы' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Догрузить новые посты' }).click();
+
+  await expect(page.getByText('Сервер вернул некорректный ответ (200)')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Посты со стены VK-группы' })).toBeVisible();
 });
