@@ -22,11 +22,11 @@ export default function FetchNewPostsButton({ onFetched }) {
       <button
         onClick={handleClick}
         disabled={loading}
-        className="w-full rounded bg-emerald-700 px-4 py-1.5 text-sm text-white hover:bg-emerald-600 disabled:opacity-50 sm:w-auto"
+        className="w-full rounded bg-emerald-600 px-4 py-1.5 text-sm text-white hover:bg-emerald-500 disabled:opacity-50 sm:w-auto"
       >
         {loading ? 'Загрузка...' : 'Догрузить новые посты'}
       </button>
-      {message && <span className="text-sm text-slate-500">{message}</span>}
+      {message && <span className="text-sm text-slate-400">{message}</span>}
     </div>
   )
 }

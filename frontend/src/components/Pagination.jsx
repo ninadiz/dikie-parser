@@ -36,13 +36,13 @@ export default function Pagination({ page, totalPages, hasMore, loading, onPrev,
   }
 
   const buttonClass =
-    'rounded border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50'
-  const activeButtonClass = 'rounded bg-slate-800 px-3 py-1.5 text-sm text-white'
+    'rounded border border-ink-700 px-3 py-1.5 text-sm text-slate-300 hover:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-50'
+  const activeButtonClass = 'rounded bg-ink-700 px-3 py-1.5 text-sm text-white'
 
   return (
     <nav
       aria-label={`Пагинация — ${position === 'top' ? 'сверху' : 'снизу'}`}
-      className="flex flex-wrap items-center justify-center gap-2 rounded-lg bg-white px-4 py-3 shadow-sm"
+      className="flex flex-wrap items-center justify-center gap-2 rounded-lg bg-ink-900 px-4 py-3 shadow-sm"
     >
       <button onClick={onPrev} disabled={page === 0 || loading} className={buttonClass}>
         ← Назад
@@ -50,7 +50,7 @@ export default function Pagination({ page, totalPages, hasMore, loading, onPrev,
 
       {getPageNumbers(current, totalPages).map((n, i) =>
         n === '…' ? (
-          <span key={`dots-${i}`} className="px-1 text-slate-400">
+          <span key={`dots-${i}`} className="px-1 text-slate-500">
             …
           </span>
         ) : (
@@ -71,16 +71,16 @@ export default function Pagination({ page, totalPages, hasMore, loading, onPrev,
       </button>
 
       <form onSubmit={handleGoTo} className="ml-2 flex items-center gap-1.5">
-        <span className="text-sm text-slate-500">Перейти на</span>
+        <span className="text-sm text-slate-400">Перейти на</span>
         <input
           type="number"
           min="1"
           max={totalPages}
           value={goToValue}
           onChange={(e) => setGoToValue(e.target.value)}
-          className="w-16 rounded border border-slate-300 px-2 py-1 text-sm focus:border-slate-500 focus:outline-none"
+          className="w-16 rounded border border-ink-700 bg-ink-950 px-2 py-1 text-sm text-slate-100 focus:border-slate-400 focus:outline-none"
         />
-        <span className="text-sm text-slate-500">стр.</span>
+        <span className="text-sm text-slate-400">стр.</span>
       </form>
     </nav>
   )

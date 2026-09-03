@@ -5,6 +5,7 @@ import DateRangeFilter from './components/DateRangeFilter'
 import StatsBar from './components/StatsBar'
 import BaselineDate from './components/BaselineDate'
 import FetchNewPostsButton from './components/FetchNewPostsButton'
+import BalbesDecor from './components/BalbesDecor'
 import { getPosts, getStats, getSettings, fetchNewPosts } from './api/posts'
 
 const PAGE_SIZE = 50
@@ -124,7 +125,7 @@ export default function App() {
 
   if (status === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center text-slate-400">
+      <div className="flex min-h-screen items-center justify-center bg-ink-950 text-ink-700">
         Загрузка...
       </div>
     )
@@ -132,12 +133,12 @@ export default function App() {
 
   if (status === 'error') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-100">
-        <div className="max-w-sm rounded-lg bg-white p-6 text-center shadow-md">
-          <p className="mb-4 text-slate-700">{loadError}</p>
+      <div className="flex min-h-screen items-center justify-center bg-ink-950">
+        <div className="max-w-sm rounded-lg bg-ink-900 p-6 text-center shadow-sm">
+          <p className="mb-4 text-slate-200">{loadError}</p>
           <button
             onClick={bootstrap}
-            className="rounded bg-slate-800 px-4 py-2 text-white hover:bg-slate-700"
+            className="rounded bg-ink-700 px-4 py-2 text-white hover:bg-ink-800"
           >
             Повторить
           </button>
@@ -147,10 +148,11 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-3 sm:p-6">
+    <div className="min-h-screen bg-ink-950 p-3 sm:p-6">
+      <BalbesDecor />
       <div className="mx-auto max-w-5xl">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-slate-800 sm:text-xl">Посты со стены VK-группы</h1>
+          <h1 className="text-lg font-semibold text-slate-100 sm:text-xl">Посты со стены VK-группы</h1>
         </div>
 
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -159,7 +161,7 @@ export default function App() {
         </div>
 
         <DateRangeFilter onApply={handleFilterApply} />
-        {filterError && <p className="mb-4 text-sm text-red-600">{filterError}</p>}
+        {filterError && <p className="mb-4 text-sm text-red-400">{filterError}</p>}
         <StatsBar
           count={statsCount}
           loading={statsLoading}
