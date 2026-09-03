@@ -9,7 +9,7 @@ function getPageWindow(current, total, size = 5) {
   return Array.from({ length: windowSize }, (_, i) => start + i)
 }
 
-export default function Pagination({ page, totalPages, hasMore, loading, onPrev, onNext, onGoTo, position }) {
+export default function Pagination({ page, totalPages, hasMore, loading, onPrev, onNext, onGoTo }) {
   const current = page + 1
   const [goToValue, setGoToValue] = useState('')
 
@@ -29,7 +29,7 @@ export default function Pagination({ page, totalPages, hasMore, loading, onPrev,
 
   return (
     <nav
-      aria-label={`Пагинация — ${position === 'top' ? 'сверху' : 'снизу'}`}
+      aria-label="Пагинация"
       className="flex flex-wrap items-center justify-center gap-2 rounded-lg bg-ink-900 light:bg-paper-100 px-4 py-3 shadow-sm"
     >
       <button onClick={onPrev} disabled={page === 0 || loading} className={buttonClass}>

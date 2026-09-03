@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import PostsTable from './components/PostsTable'
 import Pagination from './components/Pagination'
+import PageSizeSelect from './components/PageSizeSelect'
 import DateRangeFilter from './components/DateRangeFilter'
 import StatsBar from './components/StatsBar'
 import BaselineDate from './components/BaselineDate'
@@ -9,7 +10,7 @@ import BalbesDecor from './components/BalbesDecor'
 import ThemeToggle from './components/ThemeToggle'
 import { getPosts, getStats, getSettings, fetchNewPosts } from './api/posts'
 
-const PAGE_SIZE = 50
+const DEFAULT_PAGE_SIZE = 50
 
 function getInitialTheme() {
   return window.localStorage.getItem('theme') === 'light' ? 'light' : 'dark'
@@ -39,6 +40,7 @@ export default function App() {
   const [status, setStatus] = useState('loading') // loading | ready | error
   const [shown, setShown] = useState([])
   const [page, setPage] = useState(0)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   const [hasMore, setHasMore] = useState(false)
   const [pageLoading, setPageLoading] = useState(false)
   const [statsCount, setStatsCount] = useState(0)
@@ -49,10 +51,15 @@ export default function App() {
   const [filterError, setFilterError] = useState(null)
 
   const filtersRef = useRef(filters)
+  const pageSizeRef = useRef(pageSize)
 
   useEffect(() => {
     filtersRef.current = filters
   }, [filters])
+
+  useEffect(() => {
+    pageSizeRef.current = pageSize
+  }, [pageSize])
 
   useEffect(() => {
     document.documentElement.classList.toggle('light', theme === 'light')
@@ -63,12 +70,12 @@ export default function App() {
     setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
   }
 
-  const loadPage = useCallback(async (pageIndex, activeFilters) => {
+  const loadPage = useCallback(async (pageIndex, activeFilters, size = pageSizeRef.current) => {
     setStatsLoading(true)
     setPageLoading(true)
     try {
       const [postsData, statsData] = await Promise.all([
-        getPosts({ ...activeFilters, limit: PAGE_SIZE, offset: pageIndex * PAGE_SIZE }),
+        getPosts({ ...activeFilters, limit: size, offset: pageIndex * size }),
         getStats(activeFilters),
       ])
       setShown(postsData.items)
@@ -138,6 +145,12 @@ export default function App() {
     if (pageIndex !== page) loadPage(pageIndex, filtersRef.current)
   }
 
+  function handlePageSizeChange(size) {
+    setPageSize(size)
+    pageSizeRef.current = size
+    loadPage(0, filtersRef.current, size)
+  }
+
   if (status === 'loading') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-ink-950 light:bg-paper-200 text-slate-400 light:text-slate-600">
@@ -185,28 +198,14 @@ export default function App() {
           loading={statsLoading}
           isFiltered={Boolean(filters.dateFrom || filters.dateTo)}
         />
-        {/* Posts can be long — pagination up here too, so you don't have to scroll
-            all the way back down to switch pages. */}
-        <div className="mt-4">
-          <Pagination
-            position="top"
-            page={page}
-            totalPages={Math.max(1, Math.ceil(statsCount / PAGE_SIZE))}
-            hasMore={hasMore}
-            loading={pageLoading}
-            onPrev={handlePrevPage}
-            onNext={handleNextPage}
-            onGoTo={handleGoToPage}
-          />
-        </div>
+        <PageSizeSelect value={pageSize} onChange={handlePageSizeChange} />
         <div className="mt-4">
           <PostsTable posts={shown} />
         </div>
         <div className="mt-4">
           <Pagination
-            position="bottom"
             page={page}
-            totalPages={Math.max(1, Math.ceil(statsCount / PAGE_SIZE))}
+            totalPages={Math.max(1, Math.ceil(statsCount / pageSize))}
             hasMore={hasMore}
             loading={pageLoading}
             onPrev={handlePrevPage}

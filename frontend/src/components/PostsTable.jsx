@@ -1,8 +1,32 @@
+import { useState } from 'react'
+
 function formatDate(datetime) {
   return datetime.replace('T', ' ').slice(0, 16)
 }
 
+function PostText({ post, isExpanded, onToggle, className }) {
+  return (
+    <div onClick={onToggle} data-expanded={isExpanded} className="cursor-pointer">
+      <p className={`${className} ${isExpanded ? '' : 'line-clamp-3'}`}>{post.text}</p>
+      <span className="text-xs text-blue-400 light:text-blue-600">
+        {isExpanded ? 'свернуть' : 'показать полностью'}
+      </span>
+    </div>
+  )
+}
+
 export default function PostsTable({ posts }) {
+  const [expanded, setExpanded] = useState(() => new Set())
+
+  function toggleExpanded(id) {
+    setExpanded((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
   return (
     <div className="rounded-lg bg-ink-900 light:bg-paper-100 shadow-sm">
       <table className="hidden w-full border-collapse text-left text-sm md:table">
@@ -27,8 +51,13 @@ export default function PostsTable({ posts }) {
               <td className="whitespace-nowrap px-4 py-2 align-top text-slate-400 light:text-slate-600">
                 {formatDate(post.published_at)}
               </td>
-              <td className="px-4 py-2 align-top whitespace-pre-wrap text-slate-100 light:text-slate-900">
-                {post.text}
+              <td className="max-w-md px-4 py-2 align-top">
+                <PostText
+                  post={post}
+                  isExpanded={expanded.has(post.id)}
+                  onToggle={() => toggleExpanded(post.id)}
+                  className="whitespace-pre-wrap text-slate-100 light:text-slate-900"
+                />
               </td>
               <td className="px-4 py-2 align-top">
                 <a
@@ -69,7 +98,12 @@ export default function PostsTable({ posts }) {
         {posts.map((post) => (
           <li key={post.id} className="space-y-2 p-4">
             <p className="text-xs text-slate-400 light:text-slate-600">{formatDate(post.published_at)}</p>
-            <p className="whitespace-pre-wrap text-sm text-slate-100 light:text-slate-900">{post.text}</p>
+            <PostText
+              post={post}
+              isExpanded={expanded.has(post.id)}
+              onToggle={() => toggleExpanded(post.id)}
+              className="whitespace-pre-wrap text-sm text-slate-100 light:text-slate-900"
+            />
             <p className="text-sm">
               <span className="text-slate-400 light:text-slate-600">Автор: </span>
               <a
