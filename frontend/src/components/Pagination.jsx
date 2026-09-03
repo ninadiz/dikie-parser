@@ -1,38 +1,26 @@
 import { useState } from 'react'
 
-// Windowed page numbers with ellipsis: 1 … cur-1 cur cur+1 … total
-function getPageNumbers(current, total, delta = 1) {
-  const range = []
-  for (let i = 1; i <= total; i++) {
-    if (i === 1 || i === total || (i >= current - delta && i <= current + delta)) {
-      range.push(i)
-    }
-  }
-
-  const withDots = []
-  let last = 0
-  for (const i of range) {
-    if (last) {
-      if (i - last === 2) withDots.push(last + 1)
-      else if (i - last > 2) withDots.push('…')
-    }
-    withDots.push(i)
-    last = i
-  }
-  return withDots
+// Always exactly `size` consecutive numbers (fewer only if there aren't that many
+// pages total), sliding so the current page stays roughly centered — no first/last
+// anchors, no ellipsis.
+function getPageWindow(current, total, size = 5) {
+  const windowSize = Math.min(size, total)
+  const start = Math.min(Math.max(1, current - Math.floor(size / 2)), total - windowSize + 1)
+  return Array.from({ length: windowSize }, (_, i) => start + i)
 }
 
 export default function Pagination({ page, totalPages, hasMore, loading, onPrev, onNext, onGoTo, position }) {
   const current = page + 1
   const [goToValue, setGoToValue] = useState('')
 
-  function handleGoTo(e) {
+  function handleGoToKeyDown(e) {
+    if (e.key !== 'Enter') return
     e.preventDefault()
     const n = parseInt(goToValue, 10)
     if (Number.isFinite(n) && n >= 1 && n <= totalPages) {
       onGoTo(n - 1)
-      setGoToValue('')
     }
+    setGoToValue('')
   }
 
   const buttonClass =
@@ -45,32 +33,26 @@ export default function Pagination({ page, totalPages, hasMore, loading, onPrev,
       className="flex flex-wrap items-center justify-center gap-2 rounded-lg bg-ink-900 px-4 py-3 shadow-sm"
     >
       <button onClick={onPrev} disabled={page === 0 || loading} className={buttonClass}>
-        ← Назад
+        Назад
       </button>
 
-      {getPageNumbers(current, totalPages).map((n, i) =>
-        n === '…' ? (
-          <span key={`dots-${i}`} className="px-1 text-slate-500">
-            …
-          </span>
-        ) : (
-          <button
-            key={n}
-            onClick={() => onGoTo(n - 1)}
-            disabled={loading}
-            aria-current={n === current ? 'page' : undefined}
-            className={n === current ? activeButtonClass : buttonClass}
-          >
-            {n}
-          </button>
-        )
-      )}
+      {getPageWindow(current, totalPages).map((n) => (
+        <button
+          key={n}
+          onClick={() => onGoTo(n - 1)}
+          disabled={loading}
+          aria-current={n === current ? 'page' : undefined}
+          className={n === current ? activeButtonClass : buttonClass}
+        >
+          {n}
+        </button>
+      ))}
 
       <button onClick={onNext} disabled={!hasMore || loading} className={buttonClass}>
-        Вперёд →
+        Вперёд
       </button>
 
-      <form onSubmit={handleGoTo} className="ml-2 flex items-center gap-1.5">
+      <div className="ml-2 flex items-center gap-1.5">
         <span className="text-sm text-slate-400">Перейти на</span>
         <input
           type="number"
@@ -78,10 +60,11 @@ export default function Pagination({ page, totalPages, hasMore, loading, onPrev,
           max={totalPages}
           value={goToValue}
           onChange={(e) => setGoToValue(e.target.value)}
+          onKeyDown={handleGoToKeyDown}
           className="w-16 rounded border border-ink-700 bg-ink-950 px-2 py-1 text-sm text-slate-100 focus:border-slate-400 focus:outline-none"
         />
         <span className="text-sm text-slate-400">стр.</span>
-      </form>
+      </div>
     </nav>
   )
 }

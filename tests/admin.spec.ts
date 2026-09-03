@@ -92,23 +92,23 @@ test('pagination shows twice (top and bottom), navigates forward and back, shows
   const bottomNav = page.getByRole('navigation', { name: 'Пагинация — снизу' });
 
   await expect(topNav.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-current', 'page');
-  await expect(topNav.getByRole('button', { name: '← Назад' })).toBeDisabled();
-  await expect(topNav.getByRole('button', { name: 'Вперёд →' })).toBeEnabled();
+  await expect(topNav.getByRole('button', { name: 'Назад' })).toBeDisabled();
+  await expect(topNav.getByRole('button', { name: 'Вперёд' })).toBeEnabled();
   // Both instances stay in sync with each other.
   await expect(bottomNav.getByRole('button', { name: '2', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: manyPosts[0].text })).toBeVisible();
   await expect(page.getByRole('cell', { name: manyPosts[49].text })).toBeVisible();
 
-  await topNav.getByRole('button', { name: 'Вперёд →' }).click();
+  await topNav.getByRole('button', { name: 'Вперёд' }).click();
 
   await expect(topNav.getByRole('button', { name: '2', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(bottomNav.getByRole('button', { name: '2', exact: true })).toHaveAttribute('aria-current', 'page');
-  await expect(topNav.getByRole('button', { name: 'Вперёд →' })).toBeDisabled();
+  await expect(topNav.getByRole('button', { name: 'Вперёд' })).toBeDisabled();
   await expect(page.getByRole('cell', { name: manyPosts[50].text })).toBeVisible();
   expect(lastRequestUrl.posts).toContain('offset=50');
 
   // Bottom nav's Back button works too — not just the top one.
-  await bottomNav.getByRole('button', { name: '← Назад' }).click();
+  await bottomNav.getByRole('button', { name: 'Назад' }).click();
 
   await expect(topNav.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('cell', { name: manyPosts[0].text })).toBeVisible();
@@ -119,14 +119,32 @@ test('pagination: jumping to a page number and using "Перейти на ... с
   await page.goto('/');
   const topNav = page.getByRole('navigation', { name: 'Пагинация — сверху' });
 
-  // Page 3's button isn't in the initial window (1, 2, …, 5) — click one that is.
   await topNav.getByRole('button', { name: '2', exact: true }).click();
   await expect(topNav.getByRole('button', { name: '2', exact: true })).toHaveAttribute('aria-current', 'page');
 
   await topNav.getByRole('spinbutton').fill('5');
   await topNav.getByRole('spinbutton').press('Enter');
   await expect(topNav.getByRole('button', { name: '5', exact: true })).toHaveAttribute('aria-current', 'page');
-  await expect(topNav.getByRole('button', { name: 'Вперёд →' })).toBeDisabled();
+  await expect(topNav.getByRole('button', { name: 'Вперёд' })).toBeDisabled();
+});
+
+test('pagination window always shows exactly 5 numbers, no ellipsis, no pinned first/last', async ({ page }) => {
+  await mockBackend(page, { posts: makeManyPosts(1000) }); // 20 pages of 50
+  await page.goto('/');
+  const topNav = page.getByRole('navigation', { name: 'Пагинация — сверху' });
+
+  await expect(topNav.getByText('…')).toHaveCount(0);
+  await expect(topNav.getByRole('button', { name: /^\d+$/ })).toHaveCount(5);
+  await expect(topNav.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-current', 'page');
+
+  await topNav.getByRole('spinbutton').fill('10');
+  await topNav.getByRole('spinbutton').press('Enter');
+
+  await expect(topNav.getByRole('button', { name: /^\d+$/ })).toHaveCount(5);
+  await expect(topNav.getByRole('button', { name: '10', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(topNav.getByRole('button', { name: '8', exact: true })).toBeVisible();
+  await expect(topNav.getByRole('button', { name: '12', exact: true })).toBeVisible();
+  await expect(topNav.getByRole('button', { name: '1', exact: true })).toHaveCount(0); // page 1 no longer pinned
 });
 
 test('pagination is reflected in the URL and a direct link opens on that page', async ({ page }) => {
@@ -138,7 +156,7 @@ test('pagination is reflected in the URL and a direct link opens on that page', 
   await expect(topNav.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-current', 'page');
   expect(new URL(page.url()).searchParams.get('page')).toBeNull(); // page 1 has no ?page
 
-  await topNav.getByRole('button', { name: 'Вперёд →' }).click();
+  await topNav.getByRole('button', { name: 'Вперёд' }).click();
   await expect(topNav.getByRole('button', { name: '2', exact: true })).toHaveAttribute('aria-current', 'page');
   expect(new URL(page.url()).searchParams.get('page')).toBe('2');
 
@@ -158,7 +176,7 @@ test('applying a filter resets pagination back to page 1', async ({ page }) => {
   await page.goto('/');
   const topNav = page.getByRole('navigation', { name: 'Пагинация — сверху' });
 
-  await topNav.getByRole('button', { name: 'Вперёд →' }).click();
+  await topNav.getByRole('button', { name: 'Вперёд' }).click();
   await expect(topNav.getByRole('button', { name: '2', exact: true })).toHaveAttribute('aria-current', 'page');
 
   await page.getByLabel('С', { exact: true }).fill('2026-08-01');
