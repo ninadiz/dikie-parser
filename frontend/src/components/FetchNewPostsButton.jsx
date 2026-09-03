@@ -26,7 +26,7 @@ export default function FetchNewPostsButton({ onFetched }) {
       >
         {loading ? 'Загрузка...' : 'Догрузить новые посты'}
       </button>
-      {message && <span className="text-sm text-slate-400">{message}</span>}
+      {message && <span className="text-sm text-slate-400 light:text-slate-600">{message}</span>}
     </div>
   )
 }

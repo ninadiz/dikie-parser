@@ -24,13 +24,13 @@ export default function Pagination({ page, totalPages, hasMore, loading, onPrev,
   }
 
   const buttonClass =
-    'rounded border border-ink-700 px-3 py-1.5 text-sm text-slate-300 hover:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-50'
-  const activeButtonClass = 'rounded bg-ink-700 px-3 py-1.5 text-sm text-white'
+    'rounded border border-ink-700 light:border-paper-300 px-3 py-1.5 text-sm text-slate-300 light:text-slate-700 hover:bg-ink-800 light:hover:bg-paper-200 disabled:cursor-not-allowed disabled:opacity-50'
+  const activeButtonClass = 'rounded bg-ink-700 light:bg-paper-300 px-3 py-1.5 text-sm text-white'
 
   return (
     <nav
       aria-label={`Пагинация — ${position === 'top' ? 'сверху' : 'снизу'}`}
-      className="flex flex-wrap items-center justify-center gap-2 rounded-lg bg-ink-900 px-4 py-3 shadow-sm"
+      className="flex flex-wrap items-center justify-center gap-2 rounded-lg bg-ink-900 light:bg-paper-100 px-4 py-3 shadow-sm"
     >
       <button onClick={onPrev} disabled={page === 0 || loading} className={buttonClass}>
         Назад
@@ -53,7 +53,7 @@ export default function Pagination({ page, totalPages, hasMore, loading, onPrev,
       </button>
 
       <div className="ml-2 flex items-center gap-1.5">
-        <span className="text-sm text-slate-400">Перейти на</span>
+        <span className="text-sm text-slate-400 light:text-slate-600">Перейти на</span>
         <input
           type="text"
           inputMode="numeric"
@@ -61,9 +61,9 @@ export default function Pagination({ page, totalPages, hasMore, loading, onPrev,
           value={goToValue}
           onChange={(e) => setGoToValue(e.target.value.replace(/\D/g, ''))}
           onKeyDown={handleGoToKeyDown}
-          className="w-12 rounded border border-ink-700 bg-ink-950 px-2 py-1 text-sm text-slate-100 focus:border-slate-400 focus:outline-none"
+          className="w-12 rounded border border-ink-700 light:border-paper-300 bg-ink-950 light:bg-paper-200 px-2 py-1 text-sm text-slate-100 light:text-slate-900 focus:border-slate-400 focus:outline-none"
         />
-        <span className="text-sm text-slate-400">стр.</span>
+        <span className="text-sm text-slate-400 light:text-slate-600">стр.</span>
       </div>
     </nav>
   )

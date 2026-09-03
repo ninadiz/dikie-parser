@@ -1,13 +1,25 @@
 @import "tailwindcss";
 
+/* Dark is the base/default look (unprefixed classes) — this app started dark-only,
+   so keeping it the default avoids a flash of the wrong theme on load. `light:`
+   overrides apply when <html> has the `light` class (see ThemeToggle.jsx). */
+@custom-variant light (&:where(.light, .light *));
+
 @theme {
   --color-ink-950: #06141b;
   --color-ink-900: #11212d;
   --color-ink-800: #253745;
   --color-ink-700: #4a5c6a;
+
+  --color-paper-300: #4a5c5a;
+  --color-paper-200: #9ba8ab;
+  --color-paper-100: #ccd0cf;
 }
 
-/* Lets native controls (date picker, scrollbar) render with dark chrome. */
+/* Lets native controls (date picker, scrollbar) render with matching chrome. */
 :root {
   color-scheme: dark;
+}
+:root.light {
+  color-scheme: light;
 }

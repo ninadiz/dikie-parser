@@ -6,9 +6,14 @@ import StatsBar from './components/StatsBar'
 import BaselineDate from './components/BaselineDate'
 import FetchNewPostsButton from './components/FetchNewPostsButton'
 import BalbesDecor from './components/BalbesDecor'
+import ThemeToggle from './components/ThemeToggle'
 import { getPosts, getStats, getSettings, fetchNewPosts } from './api/posts'
 
 const PAGE_SIZE = 50
+
+function getInitialTheme() {
+  return window.localStorage.getItem('theme') === 'light' ? 'light' : 'dark'
+}
 
 // Pagination is reflected in the URL (?page=N, 1-indexed for humans) so a specific
 // page can be linked to directly and the browser's back/forward buttons work.
@@ -30,6 +35,7 @@ function syncUrlToPage(pageIndex) {
 }
 
 export default function App() {
+  const [theme, setTheme] = useState(getInitialTheme)
   const [status, setStatus] = useState('loading') // loading | ready | error
   const [shown, setShown] = useState([])
   const [page, setPage] = useState(0)
@@ -47,6 +53,15 @@ export default function App() {
   useEffect(() => {
     filtersRef.current = filters
   }, [filters])
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('light', theme === 'light')
+    window.localStorage.setItem('theme', theme)
+  }, [theme])
+
+  function handleThemeToggle() {
+    setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
+  }
 
   const loadPage = useCallback(async (pageIndex, activeFilters) => {
     setStatsLoading(true)
@@ -125,7 +140,7 @@ export default function App() {
 
   if (status === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-ink-950 text-ink-700">
+      <div className="flex min-h-screen items-center justify-center bg-ink-950 light:bg-paper-200 text-slate-400 light:text-slate-600">
         Загрузка...
       </div>
     )
@@ -133,12 +148,12 @@ export default function App() {
 
   if (status === 'error') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-ink-950">
-        <div className="max-w-sm rounded-lg bg-ink-900 p-6 text-center shadow-sm">
-          <p className="mb-4 text-slate-200">{loadError}</p>
+      <div className="flex min-h-screen items-center justify-center bg-ink-950 light:bg-paper-200">
+        <div className="max-w-sm rounded-lg bg-ink-900 light:bg-paper-100 p-6 text-center shadow-sm">
+          <p className="mb-4 text-slate-200 light:text-slate-800">{loadError}</p>
           <button
             onClick={bootstrap}
-            className="rounded bg-ink-700 px-4 py-2 text-white hover:bg-ink-800"
+            className="rounded bg-ink-700 light:bg-paper-300 px-4 py-2 text-white hover:bg-ink-800 light:hover:opacity-90"
           >
             Повторить
           </button>
@@ -148,11 +163,14 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-ink-950 p-3 sm:p-6">
+    <div className="min-h-screen bg-ink-950 light:bg-paper-200 p-3 sm:p-6">
       <BalbesDecor />
       <div className="mx-auto max-w-5xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-slate-100 sm:text-xl">Посты со стены VK-группы</h1>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h1 className="text-lg font-semibold text-slate-100 light:text-slate-900 sm:text-xl">
+            Посты со стены VK-группы
+          </h1>
+          <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
         </div>
 
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
@@ -161,7 +179,7 @@ export default function App() {
         </div>
 
         <DateRangeFilter onApply={handleFilterApply} />
-        {filterError && <p className="mb-4 text-sm text-red-400">{filterError}</p>}
+        {filterError && <p className="mb-4 text-sm text-red-400 light:text-red-600">{filterError}</p>}
         <StatsBar
           count={statsCount}
           loading={statsLoading}

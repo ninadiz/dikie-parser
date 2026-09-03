@@ -1,6 +1,27 @@
 import { test, expect } from '@playwright/test';
 import { mockBackend, makeManyPosts, samplePosts } from './mocks';
 
+test('theme toggle switches to light and persists across reloads', async ({ page }) => {
+  await mockBackend(page);
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Посты со стены VK-группы' })).toBeVisible();
+
+  const html = page.locator('html');
+  await expect(html).not.toHaveClass(/light/);
+
+  await page.getByRole('button', { name: /светлую/i }).click();
+  await expect(html).toHaveClass(/light/);
+  await expect(page.getByRole('button', { name: /тёмную/i })).toBeVisible();
+
+  await mockBackend(page);
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Посты со стены VK-группы' })).toBeVisible();
+  await expect(html).toHaveClass(/light/);
+
+  await page.getByRole('button', { name: /тёмную/i }).click();
+  await expect(html).not.toHaveClass(/light/);
+});
+
 test('opens straight to the posts table, no login required', async ({ page }) => {
   await mockBackend(page);
   await page.goto('/');
