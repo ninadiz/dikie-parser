@@ -61,7 +61,7 @@ export default function Pagination({ page, totalPages, hasMore, loading, onPrev,
           value={goToValue}
           onChange={(e) => setGoToValue(e.target.value.replace(/\D/g, ''))}
           onKeyDown={handleGoToKeyDown}
-          className="w-16 rounded border border-ink-700 bg-ink-950 px-2 py-1 text-sm text-slate-100 focus:border-slate-400 focus:outline-none"
+          className="w-12 rounded border border-ink-700 bg-ink-950 px-2 py-1 text-sm text-slate-100 focus:border-slate-400 focus:outline-none"
         />
         <span className="text-sm text-slate-400">стр.</span>
       </div>
