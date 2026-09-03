@@ -74,17 +74,9 @@ export async function mockBackend(page: Page, options: MockOptions = {}) {
 
   const lastRequestUrl: Record<string, string> = {};
 
+  // Read-only: baseline_date is hardcoded server-side (see NOTES.md), no POST handling.
   await page.route('**/api/settings.php', async (route) => {
-    const request = route.request();
-
-    if (request.method() === 'POST') {
-      const body = request.postDataJSON() as { baseline_date?: string };
-      state.baselineDate = body.baseline_date ?? state.baselineDate;
-      await route.fulfill({ status: 200, json: { baseline_date: state.baselineDate } });
-      return;
-    }
-
-    lastRequestUrl.settings = request.url();
+    lastRequestUrl.settings = route.request().url();
     await route.fulfill({ status: 200, json: { baseline_date: state.baselineDate } });
   });
 

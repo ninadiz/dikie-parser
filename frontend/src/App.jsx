@@ -3,9 +3,9 @@ import PostsTable from './components/PostsTable'
 import Pagination from './components/Pagination'
 import DateRangeFilter from './components/DateRangeFilter'
 import StatsBar from './components/StatsBar'
-import BaselineDateInput from './components/BaselineDateInput'
+import BaselineDate from './components/BaselineDate'
 import FetchNewPostsButton from './components/FetchNewPostsButton'
-import { getPosts, getStats, getSettings, updateBaselineDate, fetchNewPosts } from './api/posts'
+import { getPosts, getStats, getSettings, fetchNewPosts } from './api/posts'
 
 const PAGE_SIZE = 50
 
@@ -74,15 +74,6 @@ export default function App() {
     }
   }
 
-  async function handleBaselineChange(newDate) {
-    await updateBaselineDate(newDate)
-    setBaselineDate(newDate)
-    if (!filters.dateFrom && !filters.dateTo) {
-      const statsData = await getStats(filters)
-      setStatsCount(statsData.count)
-    }
-  }
-
   async function handleFetchNew() {
     const result = await fetchNewPosts()
     if (result.count > 0) {
@@ -131,7 +122,7 @@ export default function App() {
         </div>
 
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-          <BaselineDateInput value={baselineDate} onChange={handleBaselineChange} />
+          <BaselineDate value={baselineDate} />
           <FetchNewPostsButton onFetched={handleFetchNew} />
         </div>
 

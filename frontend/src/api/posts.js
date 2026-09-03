@@ -31,13 +31,6 @@ export function getSettings() {
   return apiFetch('/api/settings.php')
 }
 
-export function updateBaselineDate(baselineDate) {
-  return apiFetch('/api/settings.php', {
-    method: 'POST',
-    body: JSON.stringify({ baseline_date: baselineDate }),
-  })
-}
-
 export function fetchNewPosts() {
   return apiFetch('/fetch.php', { method: 'POST' })
 }
