@@ -32,6 +32,17 @@ export const samplePosts: Post[] = [
   },
 ];
 
+/** Generates `n` distinct posts (newest first, id descending) for pagination tests. */
+export function makeManyPosts(n: number): Post[] {
+  return Array.from({ length: n }, (_, i) => ({
+    id: n - i,
+    published_at: `2026-08-${String(30 - (i % 28)).padStart(2, '0')} 12:00:00`,
+    text: `Пост номер ${n - i}`,
+    author_link: 'https://vk.com/id1',
+    links: [],
+  }));
+}
+
 type BackendState = {
   baselineDate: string;
   posts: Post[];
@@ -78,8 +89,16 @@ export async function mockBackend(page: Page, options: MockOptions = {}) {
   });
 
   await page.route('**/api/posts.php*', async (route) => {
-    lastRequestUrl.posts = route.request().url();
-    await route.fulfill({ status: 200, json: { items: state.posts, hasMore: false } });
+    const request = route.request();
+    lastRequestUrl.posts = request.url();
+
+    const params = new URL(request.url()).searchParams;
+    const limit = Number(params.get('limit') ?? state.posts.length);
+    const offset = Number(params.get('offset') ?? 0);
+    const items = state.posts.slice(offset, offset + limit);
+    const hasMore = offset + limit < state.posts.length;
+
+    await route.fulfill({ status: 200, json: { items, hasMore } });
   });
 
   await page.route('**/api/stats.php*', async (route) => {

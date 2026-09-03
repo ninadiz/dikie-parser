@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { mockBackend, samplePosts } from './mocks';
+import { mockBackend, makeManyPosts, samplePosts } from './mocks';
 
 test('opens straight to the posts table, no login required', async ({ page }) => {
   await mockBackend(page);
@@ -87,6 +87,43 @@ test('clicking "Догрузить новые посты" reports zero when ther
   await page.getByRole('button', { name: 'Догрузить новые посты' }).click();
 
   await expect(page.getByText('Загружено 0 новых постов')).toBeVisible();
+});
+
+test('pagination: disabled on page 1, navigates forward and back, shows correct posts', async ({ page }) => {
+  const manyPosts = makeManyPosts(60); // > PAGE_SIZE (50), so page 1 has more, page 2 doesn't
+  const { lastRequestUrl } = await mockBackend(page, { posts: manyPosts });
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Посты со стены VK-группы' })).toBeVisible();
+
+  await expect(page.getByText('Страница 1 из 2')).toBeVisible();
+  await expect(page.getByRole('button', { name: '← Назад' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Вперёд →' })).toBeEnabled();
+  await expect(page.getByRole('cell', { name: manyPosts[0].text })).toBeVisible();
+  await expect(page.getByRole('cell', { name: manyPosts[49].text })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Вперёд →' }).click();
+
+  await expect(page.getByText('Страница 2 из 2')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Вперёд →' })).toBeDisabled();
+  await expect(page.getByRole('cell', { name: manyPosts[50].text })).toBeVisible();
+  expect(lastRequestUrl.posts).toContain('offset=50');
+
+  await page.getByRole('button', { name: '← Назад' }).click();
+
+  await expect(page.getByText('Страница 1 из 2')).toBeVisible();
+  await expect(page.getByRole('cell', { name: manyPosts[0].text })).toBeVisible();
+});
+
+test('applying a filter resets pagination back to page 1', async ({ page }) => {
+  await mockBackend(page, { posts: makeManyPosts(60) });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Вперёд →' }).click();
+  await expect(page.getByText('Страница 2 из 2')).toBeVisible();
+
+  await page.getByLabel('С', { exact: true }).fill('2026-08-01');
+  await page.getByRole('button', { name: 'Применить фильтр' }).click();
+
+  await expect(page.getByText('Страница 1 из 2')).toBeVisible();
 });
 
 test('shows a retry screen when the backend is unreachable', async ({ page }) => {

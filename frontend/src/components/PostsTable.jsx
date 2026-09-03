@@ -1,27 +1,12 @@
-import { useRef } from 'react'
-
 function formatDate(datetime) {
   return datetime.replace('T', ' ').slice(0, 16)
 }
 
-export default function PostsTable({ posts, onNearEnd, loadingMore }) {
-  const containerRef = useRef(null)
-
-  function handleScroll() {
-    const el = containerRef.current
-    if (!el) return
-    const nearEnd = el.scrollTop + el.clientHeight >= el.scrollHeight - 200
-    if (nearEnd) onNearEnd()
-  }
-
+export default function PostsTable({ posts }) {
   return (
-    <div
-      ref={containerRef}
-      onScroll={handleScroll}
-      className="max-h-[70vh] overflow-y-auto rounded-lg bg-white shadow-sm"
-    >
+    <div className="rounded-lg bg-white shadow-sm">
       <table className="hidden w-full border-collapse text-left text-sm md:table">
-        <thead className="sticky top-0 bg-slate-100 text-slate-600">
+        <thead className="bg-slate-100 text-slate-600">
           <tr>
             <th className="px-4 py-2 font-medium">Дата</th>
             <th className="px-4 py-2 font-medium">Текст</th>
@@ -114,9 +99,6 @@ export default function PostsTable({ posts, onNearEnd, loadingMore }) {
 
       {posts.length === 0 && (
         <p className="px-4 py-6 text-center text-slate-400">Постов не найдено</p>
-      )}
-      {loadingMore && (
-        <p className="px-4 py-3 text-center text-sm text-slate-400">Загрузка…</p>
       )}
     </div>
   )

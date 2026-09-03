@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import PostsTable from './components/PostsTable'
+import Pagination from './components/Pagination'
 import DateRangeFilter from './components/DateRangeFilter'
 import StatsBar from './components/StatsBar'
 import BaselineDateInput from './components/BaselineDateInput'
 import FetchNewPostsButton from './components/FetchNewPostsButton'
 import { getPosts, getStats, getSettings, updateBaselineDate, fetchNewPosts } from './api/posts'
 
-const INITIAL_LIMIT = 150
 const PAGE_SIZE = 50
-const BACKGROUND_LIMIT = 100
-const REFILL_THRESHOLD = 50
 
 export default function App() {
   const [status, setStatus] = useState('loading') // loading | ready | error
   const [shown, setShown] = useState([])
-  const [loadingMore, setLoadingMore] = useState(false)
+  const [page, setPage] = useState(0)
+  const [hasMore, setHasMore] = useState(false)
+  const [pageLoading, setPageLoading] = useState(false)
   const [statsCount, setStatsCount] = useState(0)
   const [statsLoading, setStatsLoading] = useState(true)
   const [baselineDate, setBaselineDate] = useState('')
@@ -22,68 +22,29 @@ export default function App() {
   const [loadError, setLoadError] = useState(null)
   const [filterError, setFilterError] = useState(null)
 
-  // Buffered posts, fetch offset/cursor and in-flight state live in refs so the
-  // scroll handler always reads the latest values without recreating callbacks.
-  const bufferRef = useRef([])
-  const offsetRef = useRef(0)
-  const hasMoreRef = useRef(true)
-  const loadingMoreRef = useRef(false)
   const filtersRef = useRef(filters)
 
   useEffect(() => {
     filtersRef.current = filters
   }, [filters])
 
-  const loadInitial = useCallback(async (activeFilters) => {
-    setShown([])
-    bufferRef.current = []
-    offsetRef.current = 0
-    hasMoreRef.current = true
-
+  const loadPage = useCallback(async (pageIndex, activeFilters) => {
     setStatsLoading(true)
-    const [postsData, statsData] = await Promise.all([
-      getPosts({ ...activeFilters, limit: INITIAL_LIMIT, offset: 0 }),
-      getStats(activeFilters),
-    ])
-
-    setShown(postsData.items.slice(0, PAGE_SIZE))
-    bufferRef.current = postsData.items.slice(PAGE_SIZE)
-    offsetRef.current = postsData.items.length
-    hasMoreRef.current = postsData.hasMore
-
-    setStatsCount(statsData.count)
-    setStatsLoading(false)
-  }, [])
-
-  const fetchMoreFromServer = useCallback(async () => {
-    if (loadingMoreRef.current || !hasMoreRef.current) return
-    loadingMoreRef.current = true
-    setLoadingMore(true)
+    setPageLoading(true)
     try {
-      const data = await getPosts({
-        ...filtersRef.current,
-        limit: BACKGROUND_LIMIT,
-        offset: offsetRef.current,
-      })
-      bufferRef.current = bufferRef.current.concat(data.items)
-      offsetRef.current += data.items.length
-      hasMoreRef.current = data.hasMore
+      const [postsData, statsData] = await Promise.all([
+        getPosts({ ...activeFilters, limit: PAGE_SIZE, offset: pageIndex * PAGE_SIZE }),
+        getStats(activeFilters),
+      ])
+      setShown(postsData.items)
+      setHasMore(postsData.hasMore)
+      setPage(pageIndex)
+      setStatsCount(statsData.count)
     } finally {
-      loadingMoreRef.current = false
-      setLoadingMore(false)
+      setStatsLoading(false)
+      setPageLoading(false)
     }
   }, [])
-
-  const handleNearEnd = useCallback(() => {
-    if (bufferRef.current.length > 0) {
-      const next = bufferRef.current.slice(0, PAGE_SIZE)
-      bufferRef.current = bufferRef.current.slice(PAGE_SIZE)
-      setShown((prev) => prev.concat(next))
-    }
-    if (bufferRef.current.length < REFILL_THRESHOLD && hasMoreRef.current) {
-      fetchMoreFromServer()
-    }
-  }, [fetchMoreFromServer])
 
   const bootstrap = useCallback(async () => {
     setLoadError(null)
@@ -91,12 +52,12 @@ export default function App() {
       const settings = await getSettings()
       setBaselineDate(settings.baseline_date)
       setStatus('ready')
-      await loadInitial(filtersRef.current)
+      await loadPage(0, filtersRef.current)
     } catch (err) {
       setLoadError(err.message || 'Не удалось подключиться к серверу')
       setStatus('error')
     }
-  }, [loadInitial])
+  }, [loadPage])
 
   useEffect(() => {
     bootstrap()
@@ -107,7 +68,7 @@ export default function App() {
     setFilters(newFilters)
     filtersRef.current = newFilters
     try {
-      await loadInitial(newFilters)
+      await loadPage(0, newFilters)
     } catch (err) {
       setFilterError(err.message || 'Не удалось применить фильтр')
     }
@@ -125,9 +86,17 @@ export default function App() {
   async function handleFetchNew() {
     const result = await fetchNewPosts()
     if (result.count > 0) {
-      await loadInitial(filtersRef.current)
+      await loadPage(0, filtersRef.current)
     }
     return result.count
+  }
+
+  function handlePrevPage() {
+    if (page > 0) loadPage(page - 1, filtersRef.current)
+  }
+
+  function handleNextPage() {
+    if (hasMore) loadPage(page + 1, filtersRef.current)
   }
 
   if (status === 'loading') {
@@ -173,7 +142,15 @@ export default function App() {
           loading={statsLoading}
           isFiltered={Boolean(filters.dateFrom || filters.dateTo)}
         />
-        <PostsTable posts={shown} onNearEnd={handleNearEnd} loadingMore={loadingMore} />
+        <PostsTable posts={shown} />
+        <Pagination
+          page={page}
+          totalPages={Math.max(1, Math.ceil(statsCount / PAGE_SIZE))}
+          hasMore={hasMore}
+          loading={pageLoading}
+          onPrev={handlePrevPage}
+          onNext={handleNextPage}
+        />
       </div>
     </div>
   )
