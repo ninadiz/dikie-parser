@@ -6,7 +6,12 @@ require __DIR__ . '/vk_api.php';
 const VK_REQUEST_DELAY_SECONDS = 0.34; // VK ограничивает запросы: не больше ~3 в секунду
 const VK_COUNT_PER_REQUEST = 100; // максимум постов за один запрос (лимит VK)
 
-date_default_timezone_set('UTC');
+// VK's `date` is a UTC unix timestamp, but posts are meant to be read in Moscow local
+// time (that's what vk.com itself shows, and what "утром"/"в 7 часов" in post text
+// refers to) — Europe/Moscow also correctly resolves historical DST (Russia observed
+// it until 2011, then was permanently UTC+4 until switching to permanent UTC+3 in
+// 2014), which a flat +3h offset would get wrong for pre-2014 posts.
+date_default_timezone_set('Europe/Moscow');
 
 function extractLinks(string $text): array
 {

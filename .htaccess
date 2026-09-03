@@ -5,7 +5,7 @@ RewriteBase /
 # required by other PHP scripts or run via CLI/git, not requested by a browser.
 # config.php is already safe-by-construction (a bare `return [...]` outputs nothing
 # when hit directly), but it's blocked too for defense in depth since it holds secrets.
-RewriteRule ^(run_migrations\.php|db\.php|vk_api\.php|config\.php|config\.example\.php)$ - [F,L]
+RewriteRule ^(run_migrations\.php|fix_post_times\.php|db\.php|vk_api\.php|config\.php|config\.example\.php)$ - [F,L]
 RewriteRule ^migrations/ - [F,L]
 RewriteRule ^\.git/ - [F,L]
 RewriteRule ^\.gitignore$ - [F,L]

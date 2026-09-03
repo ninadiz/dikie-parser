@@ -2,6 +2,7 @@ config.php
 node_modules/
 .claude/
 STATUS.md
+run-local.bat
 
 # Playwright
 /test-results/
