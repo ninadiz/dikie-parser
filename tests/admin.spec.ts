@@ -107,6 +107,29 @@ test('pagination: disabled on page 1, navigates forward and back, shows correct 
   await expect(page.getByRole('cell', { name: manyPosts[0].text })).toBeVisible();
 });
 
+test('pagination is reflected in the URL and a direct link opens on that page', async ({ page }) => {
+  const manyPosts = makeManyPosts(60);
+  await mockBackend(page, { posts: manyPosts });
+
+  await page.goto('/');
+  await expect(page.getByText('Страница 1 из 2')).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('page')).toBeNull(); // page 1 has no ?page
+
+  await page.getByRole('button', { name: 'Вперёд →' }).click();
+  await expect(page.getByText('Страница 2 из 2')).toBeVisible();
+  expect(new URL(page.url()).searchParams.get('page')).toBe('2');
+
+  // Browser back button should return to page 1 without a reload.
+  await page.goBack();
+  await expect(page.getByText('Страница 1 из 2')).toBeVisible();
+
+  // A direct link straight to page 2 should open there.
+  await mockBackend(page, { posts: manyPosts });
+  await page.goto('/?page=2');
+  await expect(page.getByText('Страница 2 из 2')).toBeVisible();
+  await expect(page.getByRole('cell', { name: manyPosts[50].text })).toBeVisible();
+});
+
 test('applying a filter resets pagination back to page 1', async ({ page }) => {
   await mockBackend(page, { posts: makeManyPosts(60) });
   await page.goto('/');

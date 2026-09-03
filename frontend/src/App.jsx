@@ -9,6 +9,25 @@ import { getPosts, getStats, getSettings, fetchNewPosts } from './api/posts'
 
 const PAGE_SIZE = 50
 
+// Pagination is reflected in the URL (?page=N, 1-indexed for humans) so a specific
+// page can be linked to directly and the browser's back/forward buttons work.
+function getPageFromUrl() {
+  const raw = parseInt(new URLSearchParams(window.location.search).get('page'), 10)
+  return Number.isFinite(raw) && raw > 0 ? raw - 1 : 0
+}
+
+function syncUrlToPage(pageIndex) {
+  const params = new URLSearchParams(window.location.search)
+  const desired = pageIndex > 0 ? String(pageIndex + 1) : null
+  if (params.get('page') === desired) return // already in sync (e.g. came from popstate)
+
+  if (desired) params.set('page', desired)
+  else params.delete('page')
+
+  const query = params.toString()
+  window.history.pushState({ page: pageIndex }, '', window.location.pathname + (query ? `?${query}` : ''))
+}
+
 export default function App() {
   const [status, setStatus] = useState('loading') // loading | ready | error
   const [shown, setShown] = useState([])
@@ -40,6 +59,7 @@ export default function App() {
       setHasMore(postsData.hasMore)
       setPage(pageIndex)
       setStatsCount(statsData.count)
+      syncUrlToPage(pageIndex)
     } finally {
       setStatsLoading(false)
       setPageLoading(false)
@@ -52,7 +72,7 @@ export default function App() {
       const settings = await getSettings()
       setBaselineDate(settings.baseline_date)
       setStatus('ready')
-      await loadPage(0, filtersRef.current)
+      await loadPage(getPageFromUrl(), filtersRef.current)
     } catch (err) {
       setLoadError(err.message || 'Не удалось подключиться к серверу')
       setStatus('error')
@@ -62,6 +82,14 @@ export default function App() {
   useEffect(() => {
     bootstrap()
   }, [bootstrap])
+
+  useEffect(() => {
+    function onPopState() {
+      loadPage(getPageFromUrl(), filtersRef.current)
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [loadPage])
 
   async function handleFilterApply(newFilters) {
     setFilterError(null)
