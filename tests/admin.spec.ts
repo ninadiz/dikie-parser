@@ -82,64 +82,89 @@ test('clicking "Догрузить новые посты" reports zero when ther
   await expect(page.getByText('Загружено 0 новых постов')).toBeVisible();
 });
 
-test('pagination: disabled on page 1, navigates forward and back, shows correct posts', async ({ page }) => {
+test('pagination shows twice (top and bottom), navigates forward and back, shows correct posts', async ({ page }) => {
   const manyPosts = makeManyPosts(60); // > PAGE_SIZE (50), so page 1 has more, page 2 doesn't
   const { lastRequestUrl } = await mockBackend(page, { posts: manyPosts });
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Посты со стены VK-группы' })).toBeVisible();
 
-  await expect(page.getByText('Страница 1 из 2')).toBeVisible();
-  await expect(page.getByRole('button', { name: '← Назад' })).toBeDisabled();
-  await expect(page.getByRole('button', { name: 'Вперёд →' })).toBeEnabled();
+  const topNav = page.getByRole('navigation', { name: 'Пагинация — сверху' });
+  const bottomNav = page.getByRole('navigation', { name: 'Пагинация — снизу' });
+
+  await expect(topNav.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(topNav.getByRole('button', { name: '← Назад' })).toBeDisabled();
+  await expect(topNav.getByRole('button', { name: 'Вперёд →' })).toBeEnabled();
+  // Both instances stay in sync with each other.
+  await expect(bottomNav.getByRole('button', { name: '2', exact: true })).toBeVisible();
   await expect(page.getByRole('cell', { name: manyPosts[0].text })).toBeVisible();
   await expect(page.getByRole('cell', { name: manyPosts[49].text })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Вперёд →' }).click();
+  await topNav.getByRole('button', { name: 'Вперёд →' }).click();
 
-  await expect(page.getByText('Страница 2 из 2')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Вперёд →' })).toBeDisabled();
+  await expect(topNav.getByRole('button', { name: '2', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(bottomNav.getByRole('button', { name: '2', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(topNav.getByRole('button', { name: 'Вперёд →' })).toBeDisabled();
   await expect(page.getByRole('cell', { name: manyPosts[50].text })).toBeVisible();
   expect(lastRequestUrl.posts).toContain('offset=50');
 
-  await page.getByRole('button', { name: '← Назад' }).click();
+  // Bottom nav's Back button works too — not just the top one.
+  await bottomNav.getByRole('button', { name: '← Назад' }).click();
 
-  await expect(page.getByText('Страница 1 из 2')).toBeVisible();
+  await expect(topNav.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('cell', { name: manyPosts[0].text })).toBeVisible();
+});
+
+test('pagination: jumping to a page number and using "Перейти на ... стр."', async ({ page }) => {
+  await mockBackend(page, { posts: makeManyPosts(250) }); // 5 pages of 50
+  await page.goto('/');
+  const topNav = page.getByRole('navigation', { name: 'Пагинация — сверху' });
+
+  // Page 3's button isn't in the initial window (1, 2, …, 5) — click one that is.
+  await topNav.getByRole('button', { name: '2', exact: true }).click();
+  await expect(topNav.getByRole('button', { name: '2', exact: true })).toHaveAttribute('aria-current', 'page');
+
+  await topNav.getByRole('spinbutton').fill('5');
+  await topNav.getByRole('spinbutton').press('Enter');
+  await expect(topNav.getByRole('button', { name: '5', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(topNav.getByRole('button', { name: 'Вперёд →' })).toBeDisabled();
 });
 
 test('pagination is reflected in the URL and a direct link opens on that page', async ({ page }) => {
   const manyPosts = makeManyPosts(60);
   await mockBackend(page, { posts: manyPosts });
+  const topNav = page.getByRole('navigation', { name: 'Пагинация — сверху' });
 
   await page.goto('/');
-  await expect(page.getByText('Страница 1 из 2')).toBeVisible();
+  await expect(topNav.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-current', 'page');
   expect(new URL(page.url()).searchParams.get('page')).toBeNull(); // page 1 has no ?page
 
-  await page.getByRole('button', { name: 'Вперёд →' }).click();
-  await expect(page.getByText('Страница 2 из 2')).toBeVisible();
+  await topNav.getByRole('button', { name: 'Вперёд →' }).click();
+  await expect(topNav.getByRole('button', { name: '2', exact: true })).toHaveAttribute('aria-current', 'page');
   expect(new URL(page.url()).searchParams.get('page')).toBe('2');
 
   // Browser back button should return to page 1 without a reload.
   await page.goBack();
-  await expect(page.getByText('Страница 1 из 2')).toBeVisible();
+  await expect(topNav.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-current', 'page');
 
   // A direct link straight to page 2 should open there.
   await mockBackend(page, { posts: manyPosts });
   await page.goto('/?page=2');
-  await expect(page.getByText('Страница 2 из 2')).toBeVisible();
+  await expect(topNav.getByRole('button', { name: '2', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('cell', { name: manyPosts[50].text })).toBeVisible();
 });
 
 test('applying a filter resets pagination back to page 1', async ({ page }) => {
   await mockBackend(page, { posts: makeManyPosts(60) });
   await page.goto('/');
-  await page.getByRole('button', { name: 'Вперёд →' }).click();
-  await expect(page.getByText('Страница 2 из 2')).toBeVisible();
+  const topNav = page.getByRole('navigation', { name: 'Пагинация — сверху' });
+
+  await topNav.getByRole('button', { name: 'Вперёд →' }).click();
+  await expect(topNav.getByRole('button', { name: '2', exact: true })).toHaveAttribute('aria-current', 'page');
 
   await page.getByLabel('С', { exact: true }).fill('2026-08-01');
   await page.getByRole('button', { name: 'Применить фильтр' }).click();
 
-  await expect(page.getByText('Страница 1 из 2')).toBeVisible();
+  await expect(topNav.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-current', 'page');
 });
 
 test('shows a retry screen when the backend is unreachable', async ({ page }) => {

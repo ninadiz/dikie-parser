@@ -118,6 +118,10 @@ export default function App() {
     if (hasMore) loadPage(page + 1, filtersRef.current)
   }
 
+  function handleGoToPage(pageIndex) {
+    if (pageIndex !== page) loadPage(pageIndex, filtersRef.current)
+  }
+
   if (status === 'loading') {
     return (
       <div className="flex min-h-screen items-center justify-center text-slate-400">
@@ -161,15 +165,35 @@ export default function App() {
           loading={statsLoading}
           isFiltered={Boolean(filters.dateFrom || filters.dateTo)}
         />
-        <PostsTable posts={shown} />
-        <Pagination
-          page={page}
-          totalPages={Math.max(1, Math.ceil(statsCount / PAGE_SIZE))}
-          hasMore={hasMore}
-          loading={pageLoading}
-          onPrev={handlePrevPage}
-          onNext={handleNextPage}
-        />
+        {/* Posts can be long — pagination up here too, so you don't have to scroll
+            all the way back down to switch pages. */}
+        <div className="mt-4">
+          <Pagination
+            position="top"
+            page={page}
+            totalPages={Math.max(1, Math.ceil(statsCount / PAGE_SIZE))}
+            hasMore={hasMore}
+            loading={pageLoading}
+            onPrev={handlePrevPage}
+            onNext={handleNextPage}
+            onGoTo={handleGoToPage}
+          />
+        </div>
+        <div className="mt-4">
+          <PostsTable posts={shown} />
+        </div>
+        <div className="mt-4">
+          <Pagination
+            position="bottom"
+            page={page}
+            totalPages={Math.max(1, Math.ceil(statsCount / PAGE_SIZE))}
+            hasMore={hasMore}
+            loading={pageLoading}
+            onPrev={handlePrevPage}
+            onNext={handleNextPage}
+            onGoTo={handleGoToPage}
+          />
+        </div>
       </div>
     </div>
   )
