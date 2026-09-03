@@ -122,8 +122,8 @@ test('pagination: jumping to a page number and using "Перейти на ... с
   await topNav.getByRole('button', { name: '2', exact: true }).click();
   await expect(topNav.getByRole('button', { name: '2', exact: true })).toHaveAttribute('aria-current', 'page');
 
-  await topNav.getByRole('spinbutton').fill('5');
-  await topNav.getByRole('spinbutton').press('Enter');
+  await topNav.getByRole('textbox').fill('5');
+  await topNav.getByRole('textbox').press('Enter');
   await expect(topNav.getByRole('button', { name: '5', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(topNav.getByRole('button', { name: 'Вперёд' })).toBeDisabled();
 });
@@ -137,8 +137,8 @@ test('pagination window always shows exactly 5 numbers, no ellipsis, no pinned f
   await expect(topNav.getByRole('button', { name: /^\d+$/ })).toHaveCount(5);
   await expect(topNav.getByRole('button', { name: '1', exact: true })).toHaveAttribute('aria-current', 'page');
 
-  await topNav.getByRole('spinbutton').fill('10');
-  await topNav.getByRole('spinbutton').press('Enter');
+  await topNav.getByRole('textbox').fill('10');
+  await topNav.getByRole('textbox').press('Enter');
 
   await expect(topNav.getByRole('button', { name: /^\d+$/ })).toHaveCount(5);
   await expect(topNav.getByRole('button', { name: '10', exact: true })).toHaveAttribute('aria-current', 'page');

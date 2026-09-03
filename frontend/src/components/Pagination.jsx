@@ -55,11 +55,11 @@ export default function Pagination({ page, totalPages, hasMore, loading, onPrev,
       <div className="ml-2 flex items-center gap-1.5">
         <span className="text-sm text-slate-400">Перейти на</span>
         <input
-          type="number"
-          min="1"
-          max={totalPages}
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
           value={goToValue}
-          onChange={(e) => setGoToValue(e.target.value)}
+          onChange={(e) => setGoToValue(e.target.value.replace(/\D/g, ''))}
           onKeyDown={handleGoToKeyDown}
           className="w-16 rounded border border-ink-700 bg-ink-950 px-2 py-1 text-sm text-slate-100 focus:border-slate-400 focus:outline-none"
         />
