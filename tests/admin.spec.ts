@@ -45,6 +45,10 @@ test('renders author and text links as clickable anchors', async ({ page }) => {
     'href',
     samplePosts[0].links[0]
   );
+  await expect(row.getByRole('link', { name: samplePosts[0].post_link })).toHaveAttribute(
+    'href',
+    samplePosts[0].post_link
+  );
 });
 
 test('shows a dash for author when the post has no real distinct author', async ({ page }) => {

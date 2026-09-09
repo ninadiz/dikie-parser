@@ -6,6 +6,7 @@ export type Post = {
   text: string;
   author_link: string | null;
   links: string[];
+  post_link: string | null;
 };
 
 export const samplePosts: Post[] = [
@@ -15,6 +16,7 @@ export const samplePosts: Post[] = [
     text: 'Третий пост со ссылкой https://example.com/abc',
     author_link: 'https://vk.com/id111',
     links: ['https://example.com/abc'],
+    post_link: 'https://vk.com/wall-940_3',
   },
   {
     id: 2,
@@ -22,6 +24,7 @@ export const samplePosts: Post[] = [
     text: 'Второй пост',
     author_link: null,
     links: [],
+    post_link: 'https://vk.com/wall-940_2',
   },
   {
     id: 1,
@@ -29,6 +32,7 @@ export const samplePosts: Post[] = [
     text: 'Первый пост',
     author_link: 'https://vk.com/id222',
     links: [],
+    post_link: 'https://vk.com/wall-940_1',
   },
 ];
 
@@ -40,6 +44,7 @@ export function makeManyPosts(n: number): Post[] {
     text: `Пост номер ${n - i}`,
     author_link: 'https://vk.com/id1',
     links: [],
+    post_link: `https://vk.com/wall-940_${n - i}`,
   }));
 }
 
@@ -107,6 +112,7 @@ export async function mockBackend(page: Page, options: MockOptions = {}) {
           text: 'Догруженный пост',
           author_link: 'https://vk.com/id333',
           links: [],
+          post_link: `https://vk.com/wall-940_${state.posts[0].id + 1}`,
         },
         ...state.posts,
       ];
