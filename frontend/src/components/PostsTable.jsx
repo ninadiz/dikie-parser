@@ -38,17 +38,6 @@ function AuthorLink({ authorLink, className }) {
   )
 }
 
-function PostLink({ postLink, className }) {
-  if (!postLink) {
-    return <span className="text-slate-500">—</span>
-  }
-  return (
-    <a href={postLink} target="_blank" rel="noreferrer" className={className}>
-      {postLink}
-    </a>
-  )
-}
-
 export default function PostsTable({ posts }) {
   const [expanded, setExpanded] = useState(() => new Set())
 
@@ -70,7 +59,6 @@ export default function PostsTable({ posts }) {
             <th className="px-4 py-2 font-medium">Текст</th>
             <th className="px-4 py-2 font-medium">Автор</th>
             <th className="px-4 py-2 font-medium">Ссылки</th>
-            <th className="px-4 py-2 font-medium">Ссылка на пост</th>
           </tr>
         </thead>
         <tbody>
@@ -120,12 +108,6 @@ export default function PostsTable({ posts }) {
                   </ul>
                 )}
               </td>
-              <td className="px-4 py-2 align-top">
-                <PostLink
-                  postLink={post.post_link}
-                  className="text-blue-400 light:text-blue-600 hover:underline"
-                />
-              </td>
             </tr>
           ))}
         </tbody>
@@ -169,13 +151,6 @@ export default function PostsTable({ posts }) {
                 </ul>
               )}
             </div>
-            <p className="text-sm">
-              <span className="text-slate-400 light:text-slate-600">Пост: </span>
-              <PostLink
-                postLink={post.post_link}
-                className="break-all text-blue-400 light:text-blue-600 hover:underline"
-              />
-            </p>
           </li>
         ))}
       </ul>
