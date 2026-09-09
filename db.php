@@ -134,3 +134,9 @@ function setSetting(string $key, string $value): void
     );
     $stmt->execute(['key' => $key, 'value' => $value]);
 }
+
+function getOwnerId(): ?int
+{
+    $value = getSetting('vk_owner_id');
+    return $value === null ? null : (int) $value;
+}

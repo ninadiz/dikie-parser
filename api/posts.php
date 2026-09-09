@@ -25,13 +25,18 @@ if ($hasMore) {
     $rows = array_slice($rows, 0, $limit);
 }
 
-$items = array_map(function (array $row): array {
+$ownerId = getOwnerId();
+
+$items = array_map(function (array $row) use ($ownerId): array {
     return [
         'id' => (int) $row['id'],
         'published_at' => $row['published_at'],
         'text' => $row['text'],
         'author_link' => $row['author_link'],
         'links' => json_decode($row['links'] ?? '[]', true) ?? [],
+        'post_link' => $ownerId !== null
+            ? "https://vk.com/wall{$ownerId}_{$row['vk_post_id']}"
+            : null,
     ];
 }, $rows);
 

@@ -21,14 +21,103 @@ function extractLinks(string $text): array
 
 function buildAuthorLink(?int $authorId): ?string
 {
-    if ($authorId === null) {
+    // Negative from_id means the post was published by the community itself, not a
+    // person — there is no real distinct author to link to.
+    if ($authorId === null || $authorId < 0) {
         return null;
     }
 
-    // Negative from_id means the post was published by the community itself, not a person.
-    return $authorId < 0
-        ? 'https://vk.com/club' . abs($authorId)
-        : "https://vk.com/id{$authorId}";
+    return "https://vk.com/id{$authorId}";
+}
+
+function extractCreditedAuthorLink(string $text): ?string
+{
+    // Только "От [id.../club...|Имя]" (или "от") в самом конце текста —
+    // это единственный надёжный признак, что модератор кредитует реального
+    // автора поста, а не просто на кого-то ссылается по ходу текста.
+    if (!preg_match('/(?:^|\s)[Оо]т\s+\[(id|club)(\d+)\|[^\]]*\]\s*$/u', trim($text), $m)) {
+        return null;
+    }
+
+    return $m[1] === 'club'
+        ? 'https://vk.com/club' . $m[2]
+        : 'https://vk.com/id' . $m[2];
+}
+
+function cleanMentionMarkup(string $text): string
+{
+    // VK хранит упоминания прямо в тексте как [id123|Имя]/[club123|Имя] —
+    // показываем только читаемое имя, без скобок/id; ссылка (если это кредит
+    // автора) отдельно уходит в author_link, в тексте её не оставляем.
+    return preg_replace('/\[(?:id|club)\d+\|([^\]]*)\]/u', '$1', $text);
+}
+
+function isProfileLink(string $url): bool
+{
+    // Настоящая ссылка на профиль человека — vk.com/id<цифры> или
+    // vk.com/<никнейм>. Никогда не wall.../club.../public... и т.п. — это
+    // другие сущности VK, а не профиль конкретного человека.
+    if (!preg_match('~^https?://(?:www\.|m\.)?vk\.(?:com|ru)/([a-zA-Z0-9_.]+)~u', $url, $m)) {
+        return false;
+    }
+
+    $path = $m[1];
+    if (preg_match('~^id\d+$~', $path)) {
+        return true;
+    }
+
+    if (preg_match('~^(wall|club|public|topic|board|album|photo|video|audio|doc|market|im|feed|app|page)~i', $path)) {
+        return false;
+    }
+
+    return (bool) preg_match('~^[a-zA-Z_][a-zA-Z0-9_.]{3,31}$~', $path);
+}
+
+function extractTrailingProfileLink(string $text, ?int $ownerId, string $groupDomain): ?string
+{
+    // Модераторы иногда просто вставляют ссылку на человека прямым текстом в
+    // самом конце поста (без "От", без разметки [id|Имя]) — если последняя
+    // ссылка в тексте реально ведёт на профиль (а не на сам пост/группу/что-то
+    // ещё), считаем её кредитом автора.
+    preg_match_all('/https?:\/\/\S+/u', $text, $matches);
+    if (empty($matches[0])) {
+        return null;
+    }
+
+    $last = rtrim(end($matches[0]), ').",');
+    if (!str_ends_with(rtrim($text), $last)) {
+        return null;
+    }
+
+    if ($ownerId !== null && isOwnGroupLink($last, $ownerId, $groupDomain)) {
+        return null;
+    }
+
+    return isProfileLink($last) ? $last : null;
+}
+
+function captureOwnerIdIfMissing(array $items): void
+{
+    if (empty($items) || getSetting('vk_owner_id') !== null) {
+        return;
+    }
+
+    if (isset($items[0]['owner_id'])) {
+        setSetting('vk_owner_id', (string) (int) $items[0]['owner_id']);
+    }
+}
+
+function isOwnGroupLink(string $url, ?int $ownerId, string $groupDomain): bool
+{
+    // Ссылка на саму нашу группу (по числовому club<id> или по алиасу-домену)
+    // — не показываем её нигде, ни как "Автор", ни в "Ссылки".
+    $clean = rtrim($url, ').",');
+
+    if ($ownerId !== null && preg_match('~^https?://(?:www\.|m\.)?vk\.(?:com|ru)/club' . abs($ownerId) . '(?:[/?#].*)?$~u', $clean)) {
+        return true;
+    }
+
+    return (bool) preg_match('~^https?://(?:www\.|m\.)?vk\.(?:com|ru)/' . preg_quote($groupDomain, '~') . '(?:[/?#].*)?$~u', $clean);
 }
 
 function runFetch(): int
@@ -58,6 +147,9 @@ function runFetch(): int
             break;
         }
 
+        captureOwnerIdIfMissing($items);
+        $ownerId = getOwnerId();
+
         foreach ($items as $item) {
             $publishedAt = date('Y-m-d H:i:s', (int) $item['date']);
             $vkPostId = (int) $item['id'];
@@ -82,16 +174,34 @@ function runFetch(): int
                 }
             }
 
-            $text = $item['text'] ?? '';
+            $rawText = $item['text'] ?? '';
             $authorId = isset($item['from_id']) ? (int) $item['from_id'] : null;
+            $signerId = isset($item['signer_id']) ? (int) $item['signer_id'] : null;
+            $links = array_values(array_filter(
+                extractLinks($rawText),
+                fn (string $url): bool => !isOwnGroupLink($url, $ownerId, $vkConfig['group_domain'])
+            ));
+            $authorLink = buildAuthorLink($authorId)
+                ?? buildAuthorLink($signerId)
+                ?? extractCreditedAuthorLink($rawText)
+                ?? extractTrailingProfileLink($rawText, $ownerId, $vkConfig['group_domain']);
+
+            if ($authorLink !== null) {
+                $links = array_values(array_filter(
+                    $links,
+                    fn (string $url): bool => rtrim($url, ').",') !== rtrim($authorLink, ').",')
+                ));
+            }
+
+            $text = cleanMentionMarkup($rawText);
 
             upsertPost([
                 'vk_post_id' => $vkPostId,
                 'text' => $text,
                 'published_at' => $publishedAt,
                 'author_id' => $authorId,
-                'author_link' => buildAuthorLink($authorId),
-                'links' => extractLinks($text),
+                'author_link' => $authorLink,
+                'links' => $links,
             ]);
 
             $newPostsCount++;
