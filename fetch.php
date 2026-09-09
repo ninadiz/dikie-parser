@@ -30,6 +30,28 @@ function buildAuthorLink(?int $authorId): ?string
     return "https://vk.com/id{$authorId}";
 }
 
+function extractCreditedAuthorLink(string $text): ?string
+{
+    // Только "От [id.../club...|Имя]" (или "от") в самом конце текста —
+    // это единственный надёжный признак, что модератор кредитует реального
+    // автора поста, а не просто на кого-то ссылается по ходу текста.
+    if (!preg_match('/(?:^|\s)[Оо]т\s+\[(id|club)(\d+)\|[^\]]*\]\s*$/u', trim($text), $m)) {
+        return null;
+    }
+
+    return $m[1] === 'club'
+        ? 'https://vk.com/club' . $m[2]
+        : 'https://vk.com/id' . $m[2];
+}
+
+function cleanMentionMarkup(string $text): string
+{
+    // VK хранит упоминания прямо в тексте как [id123|Имя]/[club123|Имя] —
+    // показываем только читаемое имя, без скобок/id; ссылка (если это кредит
+    // автора) отдельно уходит в author_link, в тексте её не оставляем.
+    return preg_replace('/\[(?:id|club)\d+\|([^\]]*)\]/u', '$1', $text);
+}
+
 function captureOwnerIdIfMissing(array $items): void
 {
     if (empty($items) || getSetting('vk_owner_id') !== null) {
@@ -94,16 +116,19 @@ function runFetch(): int
                 }
             }
 
-            $text = $item['text'] ?? '';
+            $rawText = $item['text'] ?? '';
             $authorId = isset($item['from_id']) ? (int) $item['from_id'] : null;
+            $links = extractLinks($rawText);
+            $authorLink = buildAuthorLink($authorId) ?? extractCreditedAuthorLink($rawText);
+            $text = cleanMentionMarkup($rawText);
 
             upsertPost([
                 'vk_post_id' => $vkPostId,
                 'text' => $text,
                 'published_at' => $publishedAt,
                 'author_id' => $authorId,
-                'author_link' => buildAuthorLink($authorId),
-                'links' => extractLinks($text),
+                'author_link' => $authorLink,
+                'links' => $links,
             ]);
 
             $newPostsCount++;
