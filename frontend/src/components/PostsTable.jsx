@@ -4,14 +4,48 @@ function formatDate(datetime) {
   return datetime.replace('T', ' ').slice(0, 16)
 }
 
+function handlePostTextClick(onToggle) {
+  const selection = window.getSelection()
+  if (selection && selection.toString().length > 0) {
+    return
+  }
+  onToggle()
+}
+
 function PostText({ post, isExpanded, onToggle, className }) {
   return (
-    <div onClick={onToggle} data-expanded={isExpanded} className="cursor-pointer">
+    <div
+      onClick={() => handlePostTextClick(onToggle)}
+      data-expanded={isExpanded}
+      className="cursor-pointer"
+    >
       <p className={`${className} ${isExpanded ? '' : 'line-clamp-3'}`}>{post.text}</p>
       <span className="text-xs text-blue-400 light:text-blue-600">
         {isExpanded ? 'свернуть' : 'показать полностью'}
       </span>
     </div>
+  )
+}
+
+function AuthorLink({ authorLink, className }) {
+  if (!authorLink) {
+    return <span className="text-slate-500">—</span>
+  }
+  return (
+    <a href={authorLink} target="_blank" rel="noreferrer" className={className}>
+      {authorLink}
+    </a>
+  )
+}
+
+function PostLink({ postLink, className }) {
+  if (!postLink) {
+    return <span className="text-slate-500">—</span>
+  }
+  return (
+    <a href={postLink} target="_blank" rel="noreferrer" className={className}>
+      {postLink}
+    </a>
   )
 }
 
@@ -36,6 +70,7 @@ export default function PostsTable({ posts }) {
             <th className="px-4 py-2 font-medium">Текст</th>
             <th className="px-4 py-2 font-medium">Автор</th>
             <th className="px-4 py-2 font-medium">Ссылки</th>
+            <th className="px-4 py-2 font-medium">Ссылка на пост</th>
           </tr>
         </thead>
         <tbody>
@@ -60,14 +95,10 @@ export default function PostsTable({ posts }) {
                 />
               </td>
               <td className="px-4 py-2 align-top">
-                <a
-                  href={post.author_link}
-                  target="_blank"
-                  rel="noreferrer"
+                <AuthorLink
+                  authorLink={post.author_link}
                   className="text-blue-400 light:text-blue-600 hover:underline"
-                >
-                  {post.author_link}
-                </a>
+                />
               </td>
               <td className="px-4 py-2 align-top">
                 {post.links.length === 0 ? (
@@ -89,6 +120,12 @@ export default function PostsTable({ posts }) {
                   </ul>
                 )}
               </td>
+              <td className="px-4 py-2 align-top">
+                <PostLink
+                  postLink={post.post_link}
+                  className="text-blue-400 light:text-blue-600 hover:underline"
+                />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -106,14 +143,10 @@ export default function PostsTable({ posts }) {
             />
             <p className="text-sm">
               <span className="text-slate-400 light:text-slate-600">Автор: </span>
-              <a
-                href={post.author_link}
-                target="_blank"
-                rel="noreferrer"
+              <AuthorLink
+                authorLink={post.author_link}
                 className="break-all text-blue-400 light:text-blue-600 hover:underline"
-              >
-                {post.author_link}
-              </a>
+              />
             </p>
             <div className="text-sm">
               <span className="text-slate-400 light:text-slate-600">Ссылки: </span>
@@ -136,6 +169,13 @@ export default function PostsTable({ posts }) {
                 </ul>
               )}
             </div>
+            <p className="text-sm">
+              <span className="text-slate-400 light:text-slate-600">Пост: </span>
+              <PostLink
+                postLink={post.post_link}
+                className="break-all text-blue-400 light:text-blue-600 hover:underline"
+              />
+            </p>
           </li>
         ))}
       </ul>
