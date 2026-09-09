@@ -21,14 +21,24 @@ function extractLinks(string $text): array
 
 function buildAuthorLink(?int $authorId): ?string
 {
-    if ($authorId === null) {
+    // Negative from_id means the post was published by the community itself, not a
+    // person — there is no real distinct author to link to.
+    if ($authorId === null || $authorId < 0) {
         return null;
     }
 
-    // Negative from_id means the post was published by the community itself, not a person.
-    return $authorId < 0
-        ? 'https://vk.com/club' . abs($authorId)
-        : "https://vk.com/id{$authorId}";
+    return "https://vk.com/id{$authorId}";
+}
+
+function captureOwnerIdIfMissing(array $items): void
+{
+    if (empty($items) || getSetting('vk_owner_id') !== null) {
+        return;
+    }
+
+    if (isset($items[0]['owner_id'])) {
+        setSetting('vk_owner_id', (string) (int) $items[0]['owner_id']);
+    }
 }
 
 function runFetch(): int
@@ -57,6 +67,8 @@ function runFetch(): int
         if (empty($items)) {
             break;
         }
+
+        captureOwnerIdIfMissing($items);
 
         foreach ($items as $item) {
             $publishedAt = date('Y-m-d H:i:s', (int) $item['date']);
