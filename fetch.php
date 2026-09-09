@@ -52,6 +52,50 @@ function cleanMentionMarkup(string $text): string
     return preg_replace('/\[(?:id|club)\d+\|([^\]]*)\]/u', '$1', $text);
 }
 
+function isProfileLink(string $url): bool
+{
+    // Настоящая ссылка на профиль человека — vk.com/id<цифры> или
+    // vk.com/<никнейм>. Никогда не wall.../club.../public... и т.п. — это
+    // другие сущности VK, а не профиль конкретного человека.
+    if (!preg_match('~^https?://(?:www\.|m\.)?vk\.(?:com|ru)/([a-zA-Z0-9_.]+)~u', $url, $m)) {
+        return false;
+    }
+
+    $path = $m[1];
+    if (preg_match('~^id\d+$~', $path)) {
+        return true;
+    }
+
+    if (preg_match('~^(wall|club|public|topic|board|album|photo|video|audio|doc|market|im|feed|app|page)~i', $path)) {
+        return false;
+    }
+
+    return (bool) preg_match('~^[a-zA-Z_][a-zA-Z0-9_.]{3,31}$~', $path);
+}
+
+function extractTrailingProfileLink(string $text, ?int $ownerId, string $groupDomain): ?string
+{
+    // Модераторы иногда просто вставляют ссылку на человека прямым текстом в
+    // самом конце поста (без "От", без разметки [id|Имя]) — если последняя
+    // ссылка в тексте реально ведёт на профиль (а не на сам пост/группу/что-то
+    // ещё), считаем её кредитом автора.
+    preg_match_all('/https?:\/\/\S+/u', $text, $matches);
+    if (empty($matches[0])) {
+        return null;
+    }
+
+    $last = rtrim(end($matches[0]), ').",');
+    if (!str_ends_with(rtrim($text), $last)) {
+        return null;
+    }
+
+    if ($ownerId !== null && isOwnGroupLink($last, $ownerId, $groupDomain)) {
+        return null;
+    }
+
+    return isProfileLink($last) ? $last : null;
+}
+
 function captureOwnerIdIfMissing(array $items): void
 {
     if (empty($items) || getSetting('vk_owner_id') !== null) {
@@ -137,7 +181,18 @@ function runFetch(): int
                 extractLinks($rawText),
                 fn (string $url): bool => !isOwnGroupLink($url, $ownerId, $vkConfig['group_domain'])
             ));
-            $authorLink = buildAuthorLink($authorId) ?? buildAuthorLink($signerId) ?? extractCreditedAuthorLink($rawText);
+            $authorLink = buildAuthorLink($authorId)
+                ?? buildAuthorLink($signerId)
+                ?? extractCreditedAuthorLink($rawText)
+                ?? extractTrailingProfileLink($rawText, $ownerId, $vkConfig['group_domain']);
+
+            if ($authorLink !== null) {
+                $links = array_values(array_filter(
+                    $links,
+                    fn (string $url): bool => rtrim($url, ').",') !== rtrim($authorLink, ').",')
+                ));
+            }
+
             $text = cleanMentionMarkup($rawText);
 
             upsertPost([
