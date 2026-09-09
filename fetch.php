@@ -63,19 +63,6 @@ function captureOwnerIdIfMissing(array $items): void
     }
 }
 
-function isOwnGroupLink(string $url, ?int $ownerId, string $groupDomain): bool
-{
-    // Ссылка на саму нашу группу (по числовому club<id> или по алиасу-домену)
-    // — не показываем её нигде, ни как "Автор", ни в "Ссылки".
-    $clean = rtrim($url, ').",');
-
-    if ($ownerId !== null && preg_match('~^https?://(?:www\.|m\.)?vk\.(?:com|ru)/club' . abs($ownerId) . '(?:[/?#].*)?$~u', $clean)) {
-        return true;
-    }
-
-    return (bool) preg_match('~^https?://(?:www\.|m\.)?vk\.(?:com|ru)/' . preg_quote($groupDomain, '~') . '(?:[/?#].*)?$~u', $clean);
-}
-
 function runFetch(): int
 {
     $config = require __DIR__ . '/config.php';
@@ -104,7 +91,6 @@ function runFetch(): int
         }
 
         captureOwnerIdIfMissing($items);
-        $ownerId = getOwnerId();
 
         foreach ($items as $item) {
             $publishedAt = date('Y-m-d H:i:s', (int) $item['date']);
@@ -132,12 +118,8 @@ function runFetch(): int
 
             $rawText = $item['text'] ?? '';
             $authorId = isset($item['from_id']) ? (int) $item['from_id'] : null;
-            $signerId = isset($item['signer_id']) ? (int) $item['signer_id'] : null;
-            $links = array_values(array_filter(
-                extractLinks($rawText),
-                fn (string $url): bool => !isOwnGroupLink($url, $ownerId, $vkConfig['group_domain'])
-            ));
-            $authorLink = buildAuthorLink($authorId) ?? buildAuthorLink($signerId) ?? extractCreditedAuthorLink($rawText);
+            $links = extractLinks($rawText);
+            $authorLink = buildAuthorLink($authorId) ?? extractCreditedAuthorLink($rawText);
             $text = cleanMentionMarkup($rawText);
 
             upsertPost([
