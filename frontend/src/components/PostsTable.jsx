@@ -38,6 +38,19 @@ function AuthorLink({ authorLink, className }) {
   )
 }
 
+function RegionCell({ post }) {
+  if (post.extraction_pending) {
+    return <span className="italic text-slate-500">…</span>
+  }
+  if (post.region) {
+    return <span className="text-slate-100 light:text-slate-900">{post.region}</span>
+  }
+  if (post.region_raw) {
+    return <span className="italic text-slate-400 light:text-slate-600">{post.region_raw}</span>
+  }
+  return <span className="text-slate-500">—</span>
+}
+
 function PostLink({ postLink, className }) {
   if (!postLink) {
     return <span className="text-slate-500">—</span>
@@ -63,73 +76,79 @@ export default function PostsTable({ posts }) {
 
   return (
     <div className="rounded-lg bg-ink-900 light:bg-paper-100 shadow-sm">
-      <table className="hidden w-full border-collapse text-left text-sm md:table">
-        <thead className="bg-ink-800 light:bg-paper-300/20 text-slate-300 light:text-slate-700">
-          <tr>
-            <th className="px-4 py-2 font-medium">Дата</th>
-            <th className="px-4 py-2 font-medium">Текст</th>
-            <th className="px-4 py-2 font-medium">Автор</th>
-            <th className="px-4 py-2 font-medium">Ссылки</th>
-            <th className="px-4 py-2 font-medium">Ссылка на пост</th>
-          </tr>
-        </thead>
-        <tbody>
-          {posts.map((post, i) => (
-            <tr
-              key={post.id}
-              className={
-                i % 2 === 0
-                  ? 'bg-ink-900 light:bg-paper-100'
-                  : 'bg-ink-800/40 light:bg-paper-200/40'
-              }
-            >
-              <td className="whitespace-nowrap px-4 py-2 align-top text-slate-400 light:text-slate-600">
-                {formatDate(post.published_at)}
-              </td>
-              <td className="max-w-md px-4 py-2 align-top">
-                <PostText
-                  post={post}
-                  isExpanded={expanded.has(post.id)}
-                  onToggle={() => toggleExpanded(post.id)}
-                  className="whitespace-pre-wrap text-slate-100 light:text-slate-900"
-                />
-              </td>
-              <td className="px-4 py-2 align-top">
-                <AuthorLink
-                  authorLink={post.author_link}
-                  className="text-blue-400 light:text-blue-600 hover:underline"
-                />
-              </td>
-              <td className="px-4 py-2 align-top">
-                {post.links.length === 0 ? (
-                  <span className="text-slate-500">—</span>
-                ) : (
-                  <ul className="space-y-1">
-                    {post.links.map((link) => (
-                      <li key={link}>
-                        <a
-                          href={link}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-400 light:text-blue-600 hover:underline"
-                        >
-                          {link}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </td>
-              <td className="px-4 py-2 align-top">
-                <PostLink
-                  postLink={post.post_link}
-                  className="text-blue-400 light:text-blue-600 hover:underline"
-                />
-              </td>
+      <div className="overflow-x-auto">
+        <table className="hidden w-full border-collapse text-left text-sm md:table">
+          <thead className="bg-ink-800 light:bg-paper-300/20 text-slate-300 light:text-slate-700">
+            <tr>
+              <th className="px-4 py-2 font-medium">Дата</th>
+              <th className="px-4 py-2 font-medium">Текст</th>
+              <th className="px-4 py-2 font-medium">Автор</th>
+              <th className="px-4 py-2 font-medium">Направление</th>
+              <th className="px-4 py-2 font-medium">Ссылки</th>
+              <th className="px-4 py-2 font-medium">Ссылка на пост</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {posts.map((post, i) => (
+              <tr
+                key={post.id}
+                className={
+                  i % 2 === 0
+                    ? 'bg-ink-900 light:bg-paper-100'
+                    : 'bg-ink-800/40 light:bg-paper-200/40'
+                }
+              >
+                <td className="whitespace-nowrap px-4 py-2 align-top text-slate-400 light:text-slate-600">
+                  {formatDate(post.published_at)}
+                </td>
+                <td className="max-w-md px-4 py-2 align-top">
+                  <PostText
+                    post={post}
+                    isExpanded={expanded.has(post.id)}
+                    onToggle={() => toggleExpanded(post.id)}
+                    className="whitespace-pre-wrap text-slate-100 light:text-slate-900"
+                  />
+                </td>
+                <td className="px-4 py-2 align-top">
+                  <AuthorLink
+                    authorLink={post.author_link}
+                    className="text-blue-400 light:text-blue-600 hover:underline"
+                  />
+                </td>
+                <td className="whitespace-nowrap px-4 py-2 align-top">
+                  <RegionCell post={post} />
+                </td>
+                <td className="px-4 py-2 align-top">
+                  {post.links.length === 0 ? (
+                    <span className="text-slate-500">—</span>
+                  ) : (
+                    <ul className="space-y-1">
+                      {post.links.map((link) => (
+                        <li key={link}>
+                          <a
+                            href={link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-400 light:text-blue-600 hover:underline"
+                          >
+                            {link}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </td>
+                <td className="px-4 py-2 align-top">
+                  <PostLink
+                    postLink={post.post_link}
+                    className="text-blue-400 light:text-blue-600 hover:underline"
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <ul className="divide-y divide-ink-800 light:divide-paper-200 md:hidden">
         {posts.map((post) => (
@@ -147,6 +166,10 @@ export default function PostsTable({ posts }) {
                 authorLink={post.author_link}
                 className="break-all text-blue-400 light:text-blue-600 hover:underline"
               />
+            </p>
+            <p className="text-sm">
+              <span className="text-slate-400 light:text-slate-600">Направление: </span>
+              <RegionCell post={post} />
             </p>
             <div className="text-sm">
               <span className="text-slate-400 light:text-slate-600">Ссылки: </span>

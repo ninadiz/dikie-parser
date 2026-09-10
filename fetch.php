@@ -1,7 +1,8 @@
 <?php
 
-require __DIR__ . '/db.php';
+require_once __DIR__ . '/db.php';
 require __DIR__ . '/vk_api.php';
+require __DIR__ . '/extract.php';
 
 const VK_REQUEST_DELAY_SECONDS = 0.34; // VK ограничивает запросы: не больше ~3 в секунду
 const VK_COUNT_PER_REQUEST = 100; // максимум постов за один запрос (лимит VK)
@@ -218,10 +219,24 @@ function runFetch(): int
     return $newPostsCount;
 }
 
+function runExtractionSilently(): void
+{
+    // Экстракция направления/даты через LLM — отдельная забота от скрейпинга
+    // стены. Сбой (недоступен Anthropic API, не настроен ключ и т.п.) не
+    // должен ломать основной ответ по фетчу новых постов из VK — необработанные
+    // посты просто останутся pending и будут подхвачены на следующем запуске.
+    try {
+        runExtraction();
+    } catch (AnthropicApiException $e) {
+        // намеренно проглатываем
+    }
+}
+
 if (php_sapi_name() === 'cli') {
     try {
         $count = runFetch();
         echo "Загружено новых постов: {$count}\n";
+        runExtractionSilently();
     } catch (VkApiException $e) {
         fwrite(STDERR, 'Ошибка VK API: ' . $e->getMessage() . PHP_EOL);
         exit(1);
@@ -231,6 +246,7 @@ if (php_sapi_name() === 'cli') {
 
     try {
         $count = runFetch();
+        runExtractionSilently();
         echo json_encode(['success' => true, 'count' => $count]);
     } catch (VkApiException $e) {
         http_response_code(502);

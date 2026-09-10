@@ -21,4 +21,13 @@ return [
         'group_domain' => 'group_short_name_or_id',
         'api_version' => '5.199',
     ],
+    'ai' => [
+        // Ключ Anthropic API (console.anthropic.com -> API Keys) — используется
+        // extract.php/build_region_dictionary.php для извлечения направления
+        // поездки из текста постов. Без этой секции экстракция просто не
+        // выполняется (fetch.php молча пропускает её, остальной функционал
+        // не затрагивается).
+        'api_key' => 'YOUR_ANTHROPIC_API_KEY',
+        'model' => 'claude-haiku-4-5-20251001',
+    ],
 ];

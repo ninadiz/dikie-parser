@@ -37,6 +37,9 @@ $items = array_map(function (array $row) use ($ownerId): array {
         'post_link' => $ownerId !== null
             ? "https://vk.com/wall{$ownerId}_{$row['vk_post_id']}"
             : null,
+        'region' => $row['region'],
+        'region_raw' => $row['region_raw'],
+        'extraction_pending' => $row['extraction_version'] === null,
     ];
 }, $rows);
 
