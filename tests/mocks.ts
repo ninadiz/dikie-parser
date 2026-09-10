@@ -7,6 +7,9 @@ export type Post = {
   author_link: string | null;
   links: string[];
   post_link: string | null;
+  region: string | null;
+  region_raw: string | null;
+  extraction_pending: boolean;
 };
 
 export const samplePosts: Post[] = [
@@ -17,6 +20,9 @@ export const samplePosts: Post[] = [
     author_link: 'https://vk.com/id111',
     links: ['https://example.com/abc'],
     post_link: 'https://vk.com/wall-940_3',
+    region: 'Алтай',
+    region_raw: 'Мультинские',
+    extraction_pending: false,
   },
   {
     id: 2,
@@ -25,6 +31,9 @@ export const samplePosts: Post[] = [
     author_link: null,
     links: [],
     post_link: 'https://vk.com/wall-940_2',
+    region: null,
+    region_raw: 'загадочное место',
+    extraction_pending: false,
   },
   {
     id: 1,
@@ -33,6 +42,9 @@ export const samplePosts: Post[] = [
     author_link: 'https://vk.com/id222',
     links: [],
     post_link: 'https://vk.com/wall-940_1',
+    region: null,
+    region_raw: null,
+    extraction_pending: true,
   },
 ];
 
@@ -45,6 +57,9 @@ export function makeManyPosts(n: number): Post[] {
     author_link: 'https://vk.com/id1',
     links: [],
     post_link: `https://vk.com/wall-940_${n - i}`,
+    region: null,
+    region_raw: null,
+    extraction_pending: false,
   }));
 }
 
@@ -113,6 +128,9 @@ export async function mockBackend(page: Page, options: MockOptions = {}) {
           author_link: 'https://vk.com/id333',
           links: [],
           post_link: `https://vk.com/wall-940_${state.posts[0].id + 1}`,
+          region: null,
+          region_raw: null,
+          extraction_pending: true,
         },
         ...state.posts,
       ];
