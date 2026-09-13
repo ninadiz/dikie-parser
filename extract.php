@@ -1,7 +1,7 @@
 <?php
 
 require_once __DIR__ . '/db.php';
-require __DIR__ . '/anthropic_api.php';
+require_once __DIR__ . '/anthropic_api.php';
 
 const EXTRACTION_VERSION = 1;
 const EXTRACTION_BATCH_SIZE = 25;
@@ -63,7 +63,7 @@ function buildExtractionPrompt(array $knownRegions): string
 PROMPT;
 }
 
-function extractBatch(array $posts, string $systemPrompt, array $aiConfig): array
+function buildBatchUserContent(array $posts): array
 {
     $userContentParts = [];
     $requestedIds = [];
@@ -71,7 +71,13 @@ function extractBatch(array $posts, string $systemPrompt, array $aiConfig): arra
         $requestedIds[(int) $post['id']] = true;
         $userContentParts[] = "post_id: {$post['id']}\ntext: {$post['text']}";
     }
-    $userContent = implode("\n---\n", $userContentParts);
+
+    return [implode("\n---\n", $userContentParts), $requestedIds];
+}
+
+function extractBatch(array $posts, string $systemPrompt, array $aiConfig): array
+{
+    [$userContent, $requestedIds] = buildBatchUserContent($posts);
 
     $rawResponse = anthropicMessage(
         $aiConfig['api_key'],
@@ -80,8 +86,14 @@ function extractBatch(array $posts, string $systemPrompt, array $aiConfig): arra
         $userContent
     );
 
+    return parseExtractionResponse($rawResponse, $requestedIds);
+}
+
+function parseExtractionResponse(string $rawResponse, ?array $requestedIds): array
+{
     // Модель попросили отвечать чистым JSON, но на всякий случай снимаем
-    // возможную markdown-обёртку (```json ... ```), если она всё же появилась.
+    // возможную markdown-обёртку (```json ... ```), если она всё же появилась
+    // — актуально и для ответа API, и для вручную вставленного ответа из чата.
     $cleaned = trim(preg_replace('/^```(?:json)?|```$/mu', '', trim($rawResponse)));
 
     $decoded = json_decode($cleaned, true);
@@ -96,7 +108,7 @@ function extractBatch(array $posts, string $systemPrompt, array $aiConfig): arra
         }
 
         $postId = (int) $item['post_id'];
-        if (!isset($requestedIds[$postId])) {
+        if ($requestedIds !== null && !isset($requestedIds[$postId])) {
             continue; // модель вернула post_id, которого не было в запросе
         }
 
