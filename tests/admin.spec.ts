@@ -59,6 +59,28 @@ test('shows a dash for author when the post has no real distinct author', async 
   await expect(row.getByRole('cell').nth(2)).toHaveText('—');
 });
 
+test('shows region, raw fallback, and pending indicator in the Направление column', async ({ page }) => {
+  await mockBackend(page);
+  await page.goto('/');
+
+  const rowWithRegion = page.getByRole('row').filter({ hasText: samplePosts[0].text });
+  await expect(rowWithRegion.getByRole('cell').nth(3)).toHaveText(samplePosts[0].region!);
+
+  const rowWithRawOnly = page.getByRole('row').filter({ hasText: samplePosts[1].text });
+  await expect(rowWithRawOnly.getByRole('cell').nth(3)).toHaveText(samplePosts[1].region_raw!);
+
+  const rowPending = page.getByRole('row').filter({ hasText: samplePosts[2].text });
+  await expect(rowPending.getByRole('cell').nth(3)).toHaveText('…');
+});
+
+test('desktop table is wrapped in a horizontally scrollable container', async ({ page }) => {
+  await mockBackend(page);
+  await page.goto('/');
+
+  const scrollContainer = page.locator('table').locator('xpath=..');
+  await expect(scrollContainer).toHaveClass(/overflow-x-auto/);
+});
+
 test('applying a date range filter requests posts and stats for that range', async ({ page }) => {
   const { lastRequestUrl } = await mockBackend(page);
   await page.goto('/');

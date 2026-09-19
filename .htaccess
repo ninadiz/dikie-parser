@@ -5,7 +5,8 @@ RewriteBase /
 # required by other PHP scripts or run via CLI/git, not requested by a browser.
 # config.php is already safe-by-construction (a bare `return [...]` outputs nothing
 # when hit directly), but it's blocked too for defense in depth since it holds secrets.
-RewriteRule ^(run_migrations\.php|fix_post_times\.php|fix_author_links\.php|fix_mention_markup\.php|fix_signer_id_author_links\.php|fix_trailing_profile_author_links\.php|db\.php|vk_api\.php|config\.php|config\.example\.php)$ - [F,L]
+RewriteRule ^(run_migrations\.php|fix_post_times\.php|fix_author_links\.php|fix_mention_markup\.php|fix_signer_id_author_links\.php|fix_trailing_profile_author_links\.php|extract_post_info\.php|build_region_dictionary\.php|export_batch_for_chat\.php|import_batch_results\.php|export_dictionary_for_chat\.php|import_dictionary_results\.php|extract\.php|build_dictionary\.php|anthropic_api\.php|db\.php|vk_api\.php|config\.php|config\.example\.php)$ - [F,L]
+RewriteRule ^(chat_export\.txt|chat_import\.json)$ - [F,L]
 RewriteRule ^migrations/ - [F,L]
 RewriteRule ^\.git/ - [F,L]
 RewriteRule ^\.gitignore$ - [F,L]

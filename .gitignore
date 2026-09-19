@@ -4,6 +4,11 @@ node_modules/
 STATUS.md
 run-local.bat
 
+# Ручной способ экстракции (export_*_for_chat.php / import_*_results.php) —
+# локальные рабочие файлы, содержат текст постов, каждый раз перезаписываются
+chat_export.txt
+chat_import.json
+
 # Playwright
 /test-results/
 /playwright-report/
